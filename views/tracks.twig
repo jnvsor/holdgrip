@@ -1,0 +1,23 @@
+{% extends 'base.twig' %}
+
+{% block content %}
+<h2>{{ title }}</h2>
+<main>
+    <table class="stats">
+        <tr>
+            <th class="tw15">Rank</th>
+            <th>Track</th>
+            <th class="tw15">Completed</th>
+            <th class="tw15">Track weight</th>
+        </tr>
+        {% for track in tracks -%}
+            <tr>
+                <td>{{ track.rank | number_format }}</td>
+                <td class="text"><a href="/tracks/{{ track.id }}">{{ track.name }}</a></td>
+                <td>{{ track.finished_count | number_format }}</td>
+                <td>{{ track.track_weight | number_format }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</main>
+{% endblock %}

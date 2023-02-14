@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=1024">
+    <title>{% if title is defined %}{{ title }} | {% endif %}Diamond Hands Boost</title>
+    <link rel="stylesheet" type="text/css" href="/style.css">
+</head>
+<body>
+    <header>
+        <div class="wrapper">
+            <h1><a href="/">DiamondHandsBoost</a></h1>
+            <nav>
+                <a href="/tracks">Tracks by weight</a>
+                <a href="/tracks/popular">Popular tracks</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="wrapper">
+        {%- block content %}{% endblock -%}
+    </div>
+
+    <footer>
+        <div class="wrapper">
+            Made by JnvSor, hosted by Seekr
+        </div>
+    </footer>
+</body>

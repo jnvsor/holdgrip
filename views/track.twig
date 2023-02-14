@@ -1,0 +1,42 @@
+{% extends 'base.twig' %}
+
+{% block content %}
+<h2>Track {{ track.name }}</h2>
+<main class="sidebar">
+    <aside>
+        <table class="stats">
+            <tr>
+                <th>Rank</th>
+                <td>{{ track.rank | number_format }}</td>
+            </tr>
+            <tr>
+                <th>Completions</th>
+                <td>{{ track.finished_count | number_format }}</td>
+            </tr>
+            <tr>
+                <th>Track weight</th>
+                <td>{{ track.track_weight | number_format }}</td>
+            </tr>
+        </table>
+    </aside>
+
+    <table class="stats">
+        <tr>
+            <th class="tw10">Place</th>
+            <th>Name</th>
+            <th class="tw15">Time</th>
+            <th class="tw10">Raw score</th>
+            <th class="tw10">Score</th>
+        </tr>
+        {% for row in leaderboard -%}
+            <tr>
+                <td>{{ row.rank | number_format }}</td>
+                <td class="text"><a href="/player/{{ row.steam_id }}">{{ row.name }}</a></td>
+                <td>{{ row.time }}</td>
+                <td>{{ row.workshop_score | number_format }}</td>
+                <td>{{ row.workshop_score_weighted | number_format }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</main>
+{% endblock %}

@@ -1,0 +1,126 @@
+@import 'node_modules/normalize.css/normalize';
+
+$gutter-width: 30px;
+
+html,
+body {
+    overflow-x: hidden;
+}
+
+body {
+    font-family: sans-serif;
+    background: #222;
+    color: #c8c8c8;
+    padding: 0 $gutter-width;
+}
+
+a:link,
+a:visited,
+a:hover,
+a:focus {
+    text-decoration: none;
+    color: #FFF;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+h1 {
+    margin: ($gutter-width / 2) 0;
+}
+
+.wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+header {
+    background: #343a40;
+    padding: 0 9999px;
+    margin: 0 -9999px $gutter-width;
+    box-shadow: 5px 5px 8px 3px rgba(#000, 0.6);
+
+    > .wrapper {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: space-between;
+
+        nav {
+            display: flex;
+            flex-flow: column nowrap;
+        }
+    }
+}
+
+main.sidebar {
+    display: flex;
+    flex-flow: row-reverse nowrap;
+
+    aside {
+        margin-left: $gutter-width;
+        flex: 0 0 25%;
+    }
+}
+
+#piechart {
+    margin-bottom: $gutter-width;
+}
+
+table.stats {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    background: #212529;
+    margin-bottom: $gutter-width;
+
+    &.small {
+        table-layout: auto;
+        width: auto;
+    }
+
+    tr:nth-child(2n) {
+        background: rgba(#FFF, 0.05);
+    }
+
+    td, th {
+        padding: ($gutter-width / 4) ($gutter-width / 2);
+        border-bottom: 1px solid #32383e;
+    }
+
+    th {
+        text-align: left;
+        white-space: nowrap;
+
+        &.tw10 {
+            width: 10%;
+        }
+        &.tw15 {
+            width: 15%;
+        }
+        &.tw25 {
+            width: 25%;
+        }
+        &.tw50 {
+            width: 50%;
+        }
+    }
+
+    td {
+        text-align: right;
+
+        &.text {
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+}
+
+footer {
+    text-align: center;
+    padding: ($gutter-width / 2) 0;
+}

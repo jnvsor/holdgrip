@@ -1,0 +1,24 @@
+{
+    "type": "project",
+    "require": {
+        "pimple/pimple": "^3.5",
+        "doctrine/dbal": "^3.6",
+        "twig/twig": "^3.5",
+        "symfony/http-kernel": "^6.2",
+        "symfony/routing": "^6.2"
+    },
+    "require-dev": {
+        "kint-php/kint": "^5"
+    },
+    "autoload": {
+        "psr-4": {
+            "DHB\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Jonathan Vollebregt",
+            "email": "jnvsor@gmail.com"
+        }
+    ]
+}

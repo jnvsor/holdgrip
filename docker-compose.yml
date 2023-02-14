@@ -1,0 +1,37 @@
+services:
+  app:
+    build:
+      context: ./
+    working_dir: /var/www
+    ports:
+      - 8000:80
+    volumes:
+      - db:/var/www/var/db
+    environment:
+      DEBUG: 0
+    restart: always
+  cron:
+    build:
+      context: ./
+    entrypoint: /var/www/entrypoint.sh
+    command: cron -f -l 2 -L 7
+    volumes:
+      - db:/var/www/var/db
+    networks:
+      - hostcon
+    environment:
+      DB_HOST: 192.168.0.1
+      DEBUG: 0
+    restart: always
+
+volumes:
+  db:
+
+networks:
+  hostcon:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.0.0/24
+          gateway: 192.168.0.1

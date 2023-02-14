@@ -1,0 +1,8 @@
+/vendor/
+/node_modules/
+/html/style.css
+/var/twig/*
+!/var/twig/.gitkeep
+/var/db/*
+!/var/db/.gitkeep
+/docker-compose.override.yml

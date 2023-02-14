@@ -1,0 +1,71 @@
+{% extends 'base.twig' %}
+
+{% block content %}
+<main class="sidebar">
+    <aside>
+        <div id="chartcontainer" style="height: 650px;">
+            <canvas id="piechart"></canvas>
+        </div>
+
+        <table class="stats">
+            <tr>
+                <th class="tw25">Place</th>
+                <th class="tw50">Name</th>
+                <th class="tw25">Firsts</th>
+            </tr>
+            {% for row in firsts -%}
+                <tr>
+                    <td>{{ row.rank }}</td>
+                    <td class="text">
+                        {%- if row.steam_id -%}
+                            <a href="/player/{{ row.steam_id }}">{{ row.name }}</a>
+                        {%- else -%}
+                            {{ row.name }}
+                        {%- endif -%}
+                    </td>
+                    <td>{{ row.firsts | number_format }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    </aside>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    (function () {
+        const ctx = document.getElementById('piechart');
+
+        new Chart(ctx, {
+            type: 'pie',
+            data: {{ piedata | json_encode | raw }},
+            options: {
+                aspectRatio: 0.5,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    })()
+    </script>
+
+    <table class="stats">
+        <tr>
+            <th class="tw10">Place</th>
+            <th>Name</th>
+            <th class="tw15">Holdboost</th>
+            <th class="tw10">Completed</th>
+            <th class="tw15">Score</th>
+        </tr>
+        {% for row in leaderboard -%}
+            <tr>
+                <td>{{ row.rank | number_format }}</td>
+                <td class="text"><a href="/player/{{ row.steam_id }}">{{ row.name }}</a></td>
+                <td><a href="http://holdboost.com/Player?steamID={{ row.steam_id }}" target="_blank">{{ row.holdboost_score | number_format }}</a></td>
+                <td>{{ row.workshop_count | number_format }}</td>
+                <td>{{ row.workshop_final_score | number_format }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</main>
+{% endblock %}

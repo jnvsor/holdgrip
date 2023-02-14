@@ -1,0 +1,8 @@
+/vendor/
+/node_modules/
+/html/style.css
+/var/twig/*
+/var/db/*
+/.git/
+/docker-compose.override.yml
+/todo
