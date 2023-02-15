@@ -23,5 +23,7 @@ RUN crontab /etc/cron.d/dhb_cron
 COPY ./ /var/www/
 COPY --from=composer /var/www/ ./
 COPY --from=node /var/www/html/style.css ./html/
+RUN chmod -R 0770 /var/www/var
+RUN chown -R www-data:www-data /var/www/var
 
 EXPOSE 80
