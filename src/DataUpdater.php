@@ -57,7 +57,7 @@ class DataUpdater
               SELECT
                 sprint_leaderboard_entries.level_id,
                 totals.c AS finished_count,
-                AVG(COALESCE(user_weights.weight, 0)) AS top_weight
+                (AVG(COALESCE(user_weights.weight, 0)) * 0.75) + (SUM(COALESCE(user_weights.weight, 0)) / 30 * 0.25) AS top_weight
               FROM sprint_leaderboard_entries
               INNER JOIN (
                 SELECT level_id, COUNT(*) c
