@@ -60,13 +60,19 @@ class App
         );
 
         // Twig
-        $this->container['twig'] = fn($c) => new Environment(
-            new FilesystemLoader($c['config']['twig']['templates']),
-            [
-                'cache' => $c['config']['twig']['cache'],
-                'debug' => $c['config']['debug'],
-            ]
-        );
+        $this->container['twig'] = function ($c) {
+            $twig = new Environment(
+                new FilesystemLoader($c['config']['twig']['templates']),
+                [
+                    'cache' => $c['config']['twig']['cache'],
+                    'debug' => $c['config']['debug'],
+                ]
+            );
+
+            $twig->addGlobal('stylehash', hash_file('md5', dirname(__DIR__).'/html/style.css'));
+
+            return $twig;
+        };
 
         // HTTPKernel
         $this->container['dispatcher'] = fn($c) => new EventDispatcher();
