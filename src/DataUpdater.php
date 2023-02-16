@@ -80,8 +80,6 @@ class DataUpdater
                     id,
                     name,
                     finished_count,
-                    top_weight,
-                    unfinished_weight,
                     (top_weight / 120000 * 0.8) + (unfinished_weight  * 0.2) AS track_weight
                 FROM workshop_weights
             )
@@ -126,8 +124,6 @@ class DataUpdater
                         user_weights.name,
                         user_weights.weight AS holdboost_score,
                         COUNT(weighted_leaderboard.level_id) workshop_count,
-                        SUM(COALESCE(weighted_leaderboard.workshop_score, 0)) workshop_score,
-                        SUM(COALESCE(weighted_leaderboard.workshop_score_weighted, 0)) workshop_score_weighted,
                         SUM(
                             COALESCE(weighted_leaderboard.workshop_score_weighted, 0) * (
                                 1.0 - (CAST(total_tracks_weight - POWER(total_tracks - weighted_leaderboard.row_number, 2) AS real) / total_tracks_weight)
@@ -147,8 +143,6 @@ class DataUpdater
                     name,
                     holdboost_score,
                     workshop_count,
-                    workshop_score,
-                    workshop_score_weighted,
                     workshop_score_final,
                     RANK() OVER (
                         ORDER BY workshop_score_final DESC
@@ -165,14 +159,15 @@ class DataUpdater
                     id integer NOT NULL PRIMARY KEY,
                     name text NOT NULL,
                     finished_count integer NOT NULL,
-                    top_weight real NOT NULL,
-                    unfinished_weight real NOT NULL,
                     track_weight real NOT NULL
                 ) WITHOUT ROWID
             ');
             $this->bulkInsert($db, 'workshop_weights', $workshop_weights);
 
-            $weighted_leaderboard = $this->xdb->executeQuery('SELECT * FROM weighted_leaderboard');
+            $weighted_leaderboard = $this->xdb->executeQuery('
+                SELECT level_id, steam_id, rank, time, workshop_score, workshop_score_weighted
+                FROM weighted_leaderboard
+            ');
             $db->executeUpdate('DROP TABLE IF EXISTS weighted_leaderboard');
             $db->executeUpdate('
                 CREATE TABLE IF NOT EXISTS weighted_leaderboard (
@@ -182,7 +177,6 @@ class DataUpdater
                     time integer NOT NULL,
                     workshop_score integer NOT NULL,
                     workshop_score_weighted real NOT NULL,
-                    row_number integer NOT NULL,
                     PRIMARY KEY(level_id, steam_id)
                 ) WITHOUT ROWID
             ');
@@ -204,8 +198,6 @@ class DataUpdater
                     name text NOT NULL,
                     holdboost_score integer NOT NULL,
                     workshop_count integer NOT NULL,
-                    workshop_score integer NOT NULL,
-                    workshop_score_weighted real NOT NULL,
                     workshop_score_final real NOT NULL,
                     rank integer NOT NULL
                 ) WITHOUT ROWID

@@ -30,7 +30,7 @@ class PlayerController
                 workshop_count,
                 ROUND(workshop_score_final) AS workshop_final_score
             FROM user_scores
-            WHERE workshop_score > 0
+            WHERE workshop_score_final > 0
             AND rank < 1001
             ORDER BY workshop_final_score DESC
         ');
