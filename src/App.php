@@ -34,6 +34,17 @@ class App
     {
         $this->container = new Container();
 
+        // Databases
+        $this->container['sql_logger'] = function ($c) {
+            $logger = new DebugStack();
+            $logger->enabled = $c['config']['debug'];
+            return $logger;
+        };
+        $this->container['dbal_config'] = function ($c) {
+            $conf = new DBALConfig();
+            $conf->setSqlLogger($c['sql_logger']);
+            return $conf;
+        };
         $this->container['db'] = fn($c) => DriverManager::getConnection(
             $c['config']['db'],
             $c['dbal_config']
@@ -46,17 +57,8 @@ class App
             $c['config']['external_db'],
             $c['dbal_config']
         );
-        $this->container['sql_logger'] = function ($c) {
-            $logger = new DebugStack();
-            $logger->enabled = $c['config']['debug'];
-            return $logger;
-        };
-        $this->container['dbal_config'] = function ($c) {
-            $conf = new DBALConfig();
-            $conf->setSqlLogger($c['sql_logger']);
-            return $conf;
-        };
 
+        // Twig
         $this->container['twig'] = fn($c) => new Environment(
             new FilesystemLoader($c['config']['twig']['templates']),
             [
@@ -65,11 +67,11 @@ class App
             ]
         );
 
+        // HTTPKernel
         $this->container['dispatcher'] = fn($c) => new EventDispatcher();
         $this->container['controller_resolver'] = fn($c) => new ControllerResolver($c, null);
         $this->container['request_stack'] = fn($c) => new RequestStack();
         $this->container['argument_resolver'] = fn($c) => new ArgumentResolver();
-
         $this->container['kernel'] = fn($c) => new HttpKernel(
             $c['dispatcher'],
             $c['controller_resolver'],
@@ -77,6 +79,9 @@ class App
             $c['argument_resolver'],
         );
 
+        // Router
+        $this->container['request_context'] = fn($c) => new RequestContext();
+        $this->container['url_matcher'] = fn($c) => new UrlMatcher($c['route_collection'], $c['request_context']);
         $this->container['route_collection'] = function ($c) {
             $routes = new RouteCollection();
             foreach ($c['config']['routes'] as $name => $routeinfo) {
@@ -84,10 +89,6 @@ class App
             }
             return $routes;
         };
-
-        $this->container['request_context'] = fn($c) => new RequestContext();
-        $this->container['url_matcher'] = fn($c) => new UrlMatcher($c['route_collection'], $c['request_context']);
-
         $this->container['router_listener'] = fn($c) => new RouterListener(
             $c['url_matcher'],
             $c['request_stack'],
@@ -96,17 +97,19 @@ class App
             null,
             $c['config']['debug']
         );
-
         $this->container->extend('dispatcher', function ($dispatcher, $c) {
             $dispatcher->addSubscriber($c['router_listener']);
             return $dispatcher;
         });
 
+        // Controllers
         $this->container['controller.player'] = fn($c) => new PlayerController($c['db'], $c['twig']);
         $this->container['controller.track'] = fn($c) => new TrackController($c['db'], $c['twig']);
 
+        // Updater
         $this->container['updater'] = fn($c) => new DataUpdater($c['external_db']);
 
+        // Config
         $this->container['config'] = $this->getConfig();
     }
 
