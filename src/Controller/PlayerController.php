@@ -7,6 +7,7 @@ use Doctrine\DBAL\Connection;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Twig\Environment;
 
 class PlayerController
@@ -24,10 +25,6 @@ class PlayerController
 
     public function list(Request $req, string $type): Response
     {
-        if (!isset($this->lb_types[$type])) {
-            throw new InvalidArgumentException();
-        }
-
         $lb = $this->db->fetchAllAssociative('
             WITH typelb AS (
                 SELECT
@@ -136,10 +133,6 @@ class PlayerController
 
     public function show(Request $req, int $id, string $type): Response
     {
-        if (!isset($this->lb_types[$type])) {
-            throw new InvalidArgumentException();
-        }
-
         $player = $this->db->fetchAssociative('
                 WITH rank AS (
                     SELECT
@@ -176,6 +169,10 @@ class PlayerController
             ',
             [$id]
         );
+
+        if (!$player) {
+            throw new NotFoundHttpException('Player not found');
+        }
 
         $tracks = $this->db->fetchAllAssociative('
                 WITH levels AS (

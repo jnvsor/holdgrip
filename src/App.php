@@ -5,9 +5,10 @@ namespace DHB;
 use DHB\Controller\PlayerController;
 use DHB\Controller\TrackController;
 use DHB\DataUpdater;
+use DHB\FileNotFoundListener;
 use Doctrine\DBAL\Configuration as DBALConfig;
-use Doctrine\DBAL\Logging\DebugStack;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Logging\DebugStack;
 use Kint;
 use Pimple\Container;
 use Symfony\Component\ErrorHandler\Debug;
@@ -84,8 +85,12 @@ class App
         $this->container['url_matcher'] = fn($c) => new UrlMatcher($c['route_collection'], $c['request_context']);
         $this->container['route_collection'] = function ($c) {
             $routes = new RouteCollection();
-            foreach ($c['config']['routes'] as $name => $routeinfo) {
-                $routes->add($name, new Route($routeinfo['url'], $routeinfo['defaults']));
+            foreach ($c['routes'] as $name => $routeinfo) {
+                $routes->add($name, new Route(
+                    $routeinfo['url'],
+                    $routeinfo['defaults'] ?? [],
+                    $routeinfo['requirements'] ?? []
+                ));
             }
             return $routes;
         };
@@ -113,6 +118,7 @@ class App
             $c['twig'],
             $c['config']['lb_types']
         );
+        $this->container['404_listener'] = fn($c) => new FileNotFoundListener($c['twig']);
 
         // Updater
         $this->container['updater'] = fn($c) => new DataUpdater($c['external_db'], $c['config']['lb_types']);
@@ -143,43 +149,6 @@ class App
                 'host' => getenv('DB_HOST'),
                 'port' => getenv('DB_PORT') ?: null,
                 'driver' => 'pdo_pgsql',
-            ],
-            'routes' => [
-                'player' => [
-                    'url' => '/player/{id}/{type}',
-                    'defaults' => [
-                        '_controller' => 'controller.player::show',
-                        'type' => 'sprint',
-                    ]
-                ],
-                'tracks' => [
-                    'url' => '/tracks/{type}',
-                    'defaults' => [
-                        '_controller' => 'controller.track::list',
-                        'type' => 'sprint',
-                    ],
-                ],
-                'popular_tracks' => [
-                    'url' => '/tracks/{type}/popular',
-                    'defaults' => [
-                        '_controller' => 'controller.track::popular',
-                        'type' => 'sprint',
-                    ],
-                ],
-                'track' => [
-                    'url' => '/tracks/{type}/{id}',
-                    'defaults' => [
-                        '_controller' => 'controller.track::show',
-                        'type' => 'sprint',
-                    ],
-                ],
-                'index' => [
-                    'url' => '/{type}',
-                    'defaults' => [
-                        '_controller' => 'controller.player::list',
-                        'type' => 'sprint',
-                    ],
-                ],
             ],
             'lb_types' => [
                 'sprint' => [
@@ -213,7 +182,73 @@ class App
                     'unfinished_weight' => 0,
                 ],
             ],
+            'default_lb_type' => 'sprint',
             'debug' => (bool) getenv('DEBUG'),
+        ];
+    }
+
+    public function getRoutes()
+    {
+        $conf = $this->container['config'];
+
+        $defaultType = $conf['default_lb_type'];
+        $typereq = [];
+        foreach ($conf['lb_types'] as $type) {
+            $typereq[] = $type['name'];
+        }
+        $typereq = implode('|', $typereq);
+
+        return [
+            'player' => [
+                'url' => '/player/{id}/{type}',
+                'defaults' => [
+                    '_controller' => 'controller.player::show',
+                    'type' => $defaultType,
+                ],
+                'requirements' => [
+                    'type' => $typereq,
+                ],
+            ],
+            'tracks' => [
+                'url' => '/tracks/{type}',
+                'defaults' => [
+                    '_controller' => 'controller.track::list',
+                    'type' => $defaultType,
+                ],
+                'requirements' => [
+                    'type' => $typereq,
+                ],
+            ],
+            'popular_tracks' => [
+                'url' => '/tracks/{type}/popular',
+                'defaults' => [
+                    '_controller' => 'controller.track::popular',
+                    'type' => $defaultType,
+                ],
+                'requirements' => [
+                    'type' => $typereq,
+                ],
+            ],
+            'track' => [
+                'url' => '/tracks/{type}/{id}',
+                'defaults' => [
+                    '_controller' => 'controller.track::show',
+                    'type' => $defaultType,
+                ],
+                'requirements' => [
+                    'type' => $typereq,
+                ],
+            ],
+            'index' => [
+                'url' => '/{type}',
+                'defaults' => [
+                    '_controller' => 'controller.player::list',
+                    'type' => $defaultType,
+                ],
+                'requirements' => [
+                    'type' => $typereq,
+                ],
+            ],
         ];
     }
 
@@ -243,6 +278,9 @@ class App
         if ($this->container['config']['debug']) {
             Debug::enable();
         }
+
+        $this->container['routes'] = $this->getRoutes();
+        $this->container['dispatcher']->addSubscriber($this->container['404_listener']);
     }
 
     public function handle(Request $req): Response

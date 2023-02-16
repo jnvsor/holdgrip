@@ -7,6 +7,7 @@ use Doctrine\DBAL\Connection;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Twig\Environment;
 
 class TrackController
@@ -24,10 +25,6 @@ class TrackController
 
     public function list(Request $req, string $type): Response
     {
-        if (!isset($this->lb_types[$type])) {
-            throw new InvalidArgumentException();
-        }
-
         $tracks = $this->db->fetchAllAssociative('
             WITH levels AS (
                 SELECT
@@ -62,10 +59,6 @@ class TrackController
 
     public function popular(Request $req, string $type): Response
     {
-        if (!isset($this->lb_types[$type])) {
-            throw new InvalidArgumentException();
-        }
-
         $tracks = $this->db->fetchAllAssociative('
             WITH levels AS (
                 SELECT
@@ -100,10 +93,6 @@ class TrackController
 
     public function show(Request $req, string $type, int $id): Response
     {
-        if (!isset($this->lb_types[$type])) {
-            throw new InvalidArgumentException();
-        }
-
         $track = $this->db->fetchAssociative('
                 WITH levels AS (
                     SELECT
@@ -140,6 +129,10 @@ class TrackController
             ',
             [$id]
         );
+
+        if (!$track) {
+            throw new NotFoundHttpException('Track not found');
+        }
 
         $lb = $this->db->fetchAllAssociative('
                 WITH lb AS (
