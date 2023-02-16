@@ -58,6 +58,7 @@ header {
 main.sidebar {
     display: flex;
     flex-flow: row-reverse nowrap;
+    align-items: start;
 
     aside {
         margin-left: $gutter-width;

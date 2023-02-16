@@ -6,16 +6,20 @@
     <aside>
         <table class="stats">
             <tr>
-                <th>Rank</th>
-                <td>{{ track.rank | number_format }}</td>
-            </tr>
-            <tr>
                 <th>Completions</th>
                 <td>{{ track.finished_count | number_format }}</td>
             </tr>
             <tr>
+                <th>Popularity rank</th>
+                <td>{{ track.popular_rank | number_format }}</td>
+            </tr>
+            <tr>
                 <th>Track weight</th>
                 <td>{{ track.track_weight | number_format }}</td>
+            </tr>
+            <tr>
+                <th>Weight Rank</th>
+                <td>{{ track.weight_rank | number_format }}</td>
             </tr>
         </table>
     </aside>

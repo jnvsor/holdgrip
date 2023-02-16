@@ -72,7 +72,10 @@ class TrackController
                     SELECT
                         RANK() OVER (
                             ORDER BY track_weight DESC
-                        ) rank,
+                        ) weight_rank,
+                        RANK() OVER (
+                            ORDER BY finished_count DESC
+                        ) popular_rank,
                         id,
                         name,
                         finished_count,
@@ -89,15 +92,15 @@ class TrackController
                 SELECT
                     weighted_leaderboard.rank,
                     weighted_leaderboard.time,
-                    user_weights.steam_id,
-                    user_weights.name,
+                    user_scores.steam_id,
+                    user_scores.name,
                     weighted_leaderboard.workshop_score,
                     weighted_leaderboard.workshop_score_weighted
                 FROM weighted_leaderboard
-                INNER JOIN user_weights
-                ON user_weights.steam_id = weighted_leaderboard.steam_id
+                INNER JOIN user_scores
+                ON user_scores.steam_id = weighted_leaderboard.steam_id
                 WHERE weighted_leaderboard.level_id = ?
-                ORDER BY rank ASC
+                ORDER BY weighted_leaderboard.rank ASC
             ',
             [$id]
         );

@@ -5,8 +5,8 @@
 <main>
     <table class="stats small">
         <tr>
-            <th>Holdboost</th>
-            <td><a href="http://holdboost.com/Player?steamID={{ player.steam_id }}" target="_blank">{{ player.holdboost_score | number_format }}</a></td>
+            <th>Rank</th>
+            <td>{{ player.rank }}</td>
         </tr>
         <tr>
             <th>Tracks completed</th>
@@ -15,6 +15,10 @@
         <tr>
             <th>Total score</th>
             <td>{{ player.workshop_final_score | number_format }}</td>
+        </tr>
+        <tr>
+            <th>Holdboost</th>
+            <td><a href="http://holdboost.com/Player?steamID={{ player.steam_id }}" target="_blank">{{ player.holdboost_score | number_format }}</a></td>
         </tr>
     </table>
 

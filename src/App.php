@@ -119,11 +119,11 @@ class App
             ],
             'db' => [
                 'path' => dirname(__DIR__).'/var/db/dhb.sqlite',
-                'driver' => 'sqlite3',
+                'driver' => 'pdo_sqlite',
             ],
             'flip_db' => [
                 'path' => dirname(__DIR__).'/var/db/dhb.flip.sqlite',
-                'driver' => 'sqlite3',
+                'driver' => 'pdo_sqlite',
             ],
             'external_db' => [
                 'dbname' => getenv('DB_NAME'),

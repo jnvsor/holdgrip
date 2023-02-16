@@ -23,20 +23,16 @@ class PlayerController
     {
         $lb = $this->db->fetchAllAssociative('
             SELECT
-                RANK() OVER (
-                    ORDER BY workshop_score_final DESC
-                ) AS rank,
-                user_scores.steam_id,
-                user_scores.name,
-                COALESCE(user_weights.weight, 0) AS holdboost_score,
+                rank,
+                steam_id,
+                name,
+                holdboost_score,
                 workshop_count,
                 ROUND(workshop_score_final) AS workshop_final_score
             FROM user_scores
-            LEFT JOIN user_weights
-            ON user_weights.steam_id = user_scores.steam_id
             WHERE workshop_score > 0
+            AND rank < 1001
             ORDER BY workshop_final_score DESC
-            LIMIT 1000
         ');
 
         $firsts = $this->db->fetchAllAssociative('
@@ -51,7 +47,7 @@ class PlayerController
             INNER JOIN user_scores
             ON user_scores.steam_id = weighted_leaderboard.steam_id
             WHERE weighted_leaderboard.rank = 1
-            GROUP BY user_scores.steam_id, user_scores.name
+            GROUP BY user_scores.steam_id
             ORDER BY firsts DESC
         ');
 
@@ -105,19 +101,14 @@ class PlayerController
     {
         $player = $this->db->fetchAssociative('
                 SELECT
-                  RANK() OVER (
-                    ORDER BY workshop_score_final DESC
-                  ) AS rank,
-                  user_scores.steam_id,
-                  user_scores.name,
-                  COALESCE(user_weights.weight, 0) AS holdboost_score,
-                  workshop_count,
-                  ROUND(workshop_score_final) AS workshop_final_score
+                    rank,
+                    steam_id,
+                    name,
+                    holdboost_score,
+                    workshop_count,
+                    ROUND(workshop_score_final) AS workshop_final_score
                 FROM user_scores
-                LEFT JOIN user_weights
-                ON user_weights.steam_id = user_scores.steam_id
-                WHERE user_scores.steam_id = ?
-                ORDER BY workshop_final_score DESC
+                WHERE steam_id = ?
             ',
             [$id]
         );
