@@ -52,6 +52,20 @@ h1 {
     margin: ($gutter-width / 2) 0;
 }
 
+#site-title {
+    line-height: 40px;
+
+    a:hover {
+        text-decoration: none;
+    }
+
+    img {
+        height: 40px + $gutter-width;
+        margin: (-$gutter-width / 2) 0;
+        vertical-align: middle;
+    }
+}
+
 h2.title {
     margin-top: 0;
 }
