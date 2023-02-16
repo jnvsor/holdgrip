@@ -59,8 +59,8 @@ class DataUpdater
                             SELECT
                                 lb.level_id,
                                 totals.c AS finished_count,
-                                (AVG(COALESCE(user_weights.weight, 0)) * 0.75) +
-                                    (SUM(COALESCE(user_weights.weight, 0)) / GREATEST(COUNT(*), :size) * 0.25) AS top_weight
+                                (AVG(COALESCE(user_weights.weight, 0)) * (1.0 - :dampen)) +
+                                    (SUM(COALESCE(user_weights.weight, 0)) / GREATEST(COUNT(*), :size) * :dampen) AS top_weight
                             FROM lb
                             INNER JOIN (
                                 SELECT level_id, COUNT(*) c
@@ -87,11 +87,16 @@ class DataUpdater
                         SELECT
                             id,
                             finished_count,
-                            (top_weight / 120000 * 0.8) + (unfinished_weight  * 0.2) AS track_weight
+                            (top_weight / 120000 * :top_weight) + (unfinished_weight  * :unfinished_weight) AS track_weight
                         FROM stats
                     )
                 ',
-                ['size' => $opts['top_size']]
+                [
+                    'size' => $opts['top_size'],
+                    'dampen' => $opts['dampen'],
+                    'top_weight' => $opts['top_weight'],
+                    'unfinished_weight' => $opts['unfinished_weight'],
+                ]
             );
         }
 
