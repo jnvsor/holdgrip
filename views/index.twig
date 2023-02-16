@@ -5,8 +5,8 @@
 <main>
     <div class="sidebar">
         <aside>
-            <div id="chartcontainer" style="height: 650px;">
-                <canvas id="piechart"></canvas>
+            <div id="chartcontainer">
+                <canvas id="piechart" height="{{ (piedata.labels | length) / 2 * 24 + 310 }}"></canvas>
             </div>
 
             <table class="stats">
@@ -40,6 +40,7 @@
                     data: {{ piedata | json_encode | raw }},
                     options: {
                         maintainAspectRatio: false,
+                        responsive: false,
                         plugins: {
                             legend: {
                                 position: 'bottom',
