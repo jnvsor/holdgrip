@@ -5,16 +5,16 @@
 <main>
     <table class="stats small">
         <tr>
-            <th>Rank</th>
-            <td>{{ player.rank }}</td>
+            <th>Sprint rank</th>
+            <td>{{ player.sprint_rank }}</td>
         </tr>
         <tr>
-            <th>Tracks completed</th>
-            <td>{{ player.workshop_count | number_format }}</td>
+            <th>Sprint tracks completed</th>
+            <td>{{ player.sprint_count | number_format }}</td>
         </tr>
         <tr>
-            <th>Total score</th>
-            <td>{{ player.workshop_final_score | number_format }}</td>
+            <th>Sprint score</th>
+            <td>{{ player.sprint_score | number_format }}</td>
         </tr>
         <tr>
             <th>Holdboost</th>
@@ -34,8 +34,8 @@
         {% for track in tracks -%}
             <tr>
                 <td class="text"><a href="/tracks/{{ track.id }}">{{ track.name }}</a></td>
-                <td>{{ track.track_weight | number_format }}</td>
-                <td>{{ track.place | number_format }}</td>
+                <td>{{ track.sprint_track_weight | number_format }}</td>
+                <td>{{ track.rank | number_format }}</td>
                 <td>{{ track.time }}</td>
                 <td>{{ track.workshop_score | number_format }}</td>
                 <td>{{ track.workshop_score_weighted | number_format }}</td>

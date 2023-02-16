@@ -65,8 +65,8 @@
                 <td>{{ row.rank | number_format }}</td>
                 <td class="text"><a href="/player/{{ row.steam_id }}">{{ row.name }}</a></td>
                 <td><a href="http://holdboost.com/Player?steamID={{ row.steam_id }}" target="_blank">{{ row.holdboost_score | number_format }}</a></td>
-                <td>{{ row.workshop_count | number_format }}</td>
-                <td>{{ row.workshop_final_score | number_format }}</td>
+                <td>{{ row.sprint_count | number_format }}</td>
+                <td>{{ row.sprint_score | number_format }}</td>
             </tr>
         {% endfor %}
     </table>

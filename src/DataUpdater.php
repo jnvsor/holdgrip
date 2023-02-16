@@ -42,8 +42,8 @@ class DataUpdater
         ');
 
         $this->xdb->executeUpdate('
-            CREATE TEMPORARY TABLE workshop_weights AS (
-                WITH workshop_tops AS (
+            CREATE TEMPORARY TABLE weighed_levels AS (
+                WITH sprint_tops AS (
                     SELECT
                         sprint_leaderboard_entries.level_id,
                         totals.c AS finished_count,
@@ -63,30 +63,34 @@ class DataUpdater
                     AND sprint_leaderboard_entries.rank < 31
                     GROUP BY sprint_leaderboard_entries.level_id, totals.c
                 ),
-                workshop_weights AS (
+                sprint_stats AS (
                     SELECT
                         workshop_levels.id,
-                        workshop_levels.name,
-                        COALESCE(workshop_tops.finished_count, 0) AS finished_count,
-                        COALESCE(workshop_tops.top_weight, 0) AS top_weight,
-                        ((30 - LEAST(30, COALESCE(workshop_tops.finished_count, 0))) ^ 2) / 900 AS unfinished_weight
+                        sprint_tops.finished_count,
+                        COALESCE(sprint_tops.top_weight, 0) AS top_weight,
+                        ((30 - LEAST(30, COALESCE(sprint_tops.finished_count, 0))) ^ 2) / 900 AS unfinished_weight
                     FROM workshop_levels
-                    LEFT JOIN workshop_tops
-                    ON workshop_tops.level_id = workshop_levels.id
+                    LEFT JOIN sprint_tops
+                    ON sprint_tops.level_id = workshop_levels.id
                     WHERE workshop_levels.is_sprint
                 )
 
                 SELECT
-                    id,
-                    name,
-                    finished_count,
-                    (top_weight / 120000 * 0.8) + (unfinished_weight  * 0.2) AS track_weight
-                FROM workshop_weights
+                    workshop_levels.id,
+                    workshop_levels.name,
+                    workshop_levels.is_sprint,
+                    workshop_levels.is_challenge,
+                    workshop_levels.is_stunt,
+                    sprint_stats.finished_count AS sprint_finished_count,
+                    (sprint_stats.top_weight / 120000 * 0.8) + (sprint_stats.unfinished_weight  * 0.2) AS sprint_track_weight
+                FROM workshop_levels
+                LEFT JOIN sprint_stats
+                ON sprint_stats.id = workshop_levels.id
             )
         ');
 
         $this->xdb->executeUpdate('
-            CREATE TEMPORARY TABLE weighted_leaderboard AS (
+            CREATE TEMPORARY TABLE weighted_sprint_leaderboard AS (
                 WITH workshop_points AS MATERIALIZED (
                     SELECT
                         rank,
@@ -100,19 +104,17 @@ class DataUpdater
                     sprint_leaderboard_entries.rank AS rank,
                     sprint_leaderboard_entries.time AS time,
                     COALESCE(points.jnvsor_points, 0) AS workshop_score,
-                    COALESCE(points.jnvsor_points, 0) * track_weight AS workshop_score_weighted,
+                    COALESCE(points.jnvsor_points, 0) * weighed_levels.sprint_track_weight AS workshop_score_weighted,
                     ROW_NUMBER() OVER (
                         PARTITION BY steam_id
-                        ORDER BY workshop_weights.track_weight DESC
+                        ORDER BY weighed_levels.sprint_track_weight DESC
                     ) - 1 AS row_number
                 FROM sprint_leaderboard_entries
-                INNER JOIN workshop_weights
-                ON workshop_weights.id = sprint_leaderboard_entries.level_id
+                INNER JOIN weighed_levels
+                ON weighed_levels.id = sprint_leaderboard_entries.level_id
                 LEFT JOIN workshop_points AS points
                 ON sprint_leaderboard_entries.rank = points.rank
-                WHERE sprint_leaderboard_entries.level_id IN(
-                    SELECT id FROM workshop_levels WHERE is_sprint
-                )
+                WHERE weighed_levels.is_sprint
             )
         ');
 
@@ -121,56 +123,69 @@ class DataUpdater
                 WITH scores AS (
                     SELECT
                         user_weights.steam_id,
-                        user_weights.name,
-                        user_weights.weight AS holdboost_score,
-                        COUNT(weighted_leaderboard.level_id) workshop_count,
+                        COUNT(weighted_sprint_leaderboard.level_id) AS sprint_count,
                         SUM(
-                            COALESCE(weighted_leaderboard.workshop_score_weighted, 0) * (
-                                1.0 - (CAST(total_tracks_weight - POWER(total_tracks - weighted_leaderboard.row_number, 2) AS real) / total_tracks_weight)
+                            COALESCE(weighted_sprint_leaderboard.workshop_score_weighted, 0) * (
+                                1.0 - (CAST(total_tracks_weight - POWER(total_tracks - row_number, 2) AS real) / total_tracks_weight)
                             )
-                        ) AS workshop_score_final
+                        ) AS sprint_score,
+                        0 AS challenge_count,
+                        0 AS challenge_score,
+                        0 AS stunt_count,
+                        0 AS stunt_score
                     FROM user_weights
                     CROSS JOIN (
-                        SELECT COUNT(*) AS total_tracks, POWER(COUNT(*), 2) AS total_tracks_weight FROM workshop_weights
+                        SELECT
+                            COUNT(*) AS total_tracks,
+                            POWER(COUNT(*), 2) AS total_tracks_weight
+                        FROM weighed_levels
+                        WHERE is_sprint
                     ) AS workshop_diminishing_returns
-                    INNER JOIN weighted_leaderboard
-                    ON weighted_leaderboard.steam_id = user_weights.steam_id
-                    GROUP BY user_weights.steam_id, user_weights.name, user_weights.weight
+                    INNER JOIN weighted_sprint_leaderboard
+                    ON weighted_sprint_leaderboard.steam_id = user_weights.steam_id
+                    GROUP BY user_weights.steam_id
                 )
 
                 SELECT
-                    steam_id,
-                    name,
-                    holdboost_score,
-                    workshop_count,
-                    workshop_score_final,
-                    RANK() OVER (
-                        ORDER BY workshop_score_final DESC
-                    ) AS rank
-                FROM scores
+                    user_weights.steam_id,
+                    user_weights.name,
+                    user_weights.weight AS holdboost_score,
+                    COALESCE(sprint_count, 0) AS sprint_count,
+                    COALESCE(sprint_score, 0) AS sprint_score,
+                    COALESCE(challenge_count, 0) AS challenge_count,
+                    COALESCE(challenge_score, 0) AS challenge_score,
+                    COALESCE(stunt_count, 0) AS stunt_count,
+                    COALESCE(stunt_score, 0) AS stunt_score
+                FROM user_weights
+                LEFT JOIN scores
+                ON user_weights.steam_id = scores.steam_id
             )
         ');
 
         $db->transactional(function ($db) {
-            $workshop_weights = $this->xdb->executeQuery('SELECT * FROM workshop_weights');
-            $db->executeUpdate('DROP TABLE IF EXISTS workshop_weights');
+            $weighed_levels = $this->xdb->executeQuery('SELECT * FROM weighed_levels');
+            $db->executeUpdate('DROP TABLE IF EXISTS workshop_levels');
+            // *_finished_count fields are cached here for performance purposes
             $db->executeUpdate('
-                CREATE TABLE workshop_weights (
+                CREATE TABLE workshop_levels (
                     id integer NOT NULL PRIMARY KEY,
                     name text NOT NULL,
-                    finished_count integer NOT NULL,
-                    track_weight real NOT NULL
+                    is_sprint integer NOT NULL,
+                    is_challenge integer NOT NULL,
+                    is_stunt integer NOT NULL,
+                    sprint_finished_count integer NULL,
+                    sprint_track_weight real NULL
                 ) WITHOUT ROWID
             ');
-            $this->bulkInsert($db, 'workshop_weights', $workshop_weights);
+            $this->bulkInsert($db, 'workshop_levels', $weighed_levels);
 
-            $weighted_leaderboard = $this->xdb->executeQuery('
+            $weighted_sprint_leaderboard = $this->xdb->executeQuery('
                 SELECT level_id, steam_id, rank, time, workshop_score, workshop_score_weighted
-                FROM weighted_leaderboard
+                FROM weighted_sprint_leaderboard
             ');
-            $db->executeUpdate('DROP TABLE IF EXISTS weighted_leaderboard');
+            $db->executeUpdate('DROP TABLE IF EXISTS weighted_sprint_leaderboard');
             $db->executeUpdate('
-                CREATE TABLE IF NOT EXISTS weighted_leaderboard (
+                CREATE TABLE IF NOT EXISTS weighted_sprint_leaderboard (
                     level_id integer NOT NULL,
                     steam_id integer NOT NULL,
                     rank integer NOT NULL,
@@ -182,24 +197,28 @@ class DataUpdater
             ');
             $db->executeUpdate('
                 CREATE INDEX weighted_leaderboard_level_id
-                ON weighted_leaderboard (level_id)
+                ON weighted_sprint_leaderboard (level_id)
             ');
             $db->executeUpdate('
                 CREATE INDEX weighted_leaderboard_steam_id
-                ON weighted_leaderboard (steam_id)
+                ON weighted_sprint_leaderboard (steam_id)
             ');
-            $this->bulkInsert($db, 'weighted_leaderboard', $weighted_leaderboard);
+            $this->bulkInsert($db, 'weighted_sprint_leaderboard', $weighted_sprint_leaderboard);
 
             $user_scores = $this->xdb->executeQuery('SELECT * FROM user_scores');
             $db->executeUpdate('DROP TABLE IF EXISTS user_scores');
+            // *_count fields are cached here for performance purposes
             $db->executeUpdate('
                 CREATE TABLE IF NOT EXISTS user_scores (
                     steam_id integer NOT NULL PRIMARY KEY,
                     name text NOT NULL,
                     holdboost_score integer NOT NULL,
-                    workshop_count integer NOT NULL,
-                    workshop_score_final real NOT NULL,
-                    rank integer NOT NULL
+                    sprint_count integer NOT NULL,
+                    sprint_score real NOT NULL,
+                    challenge_count integer NOT NULL,
+                    challenge_score real NOT NULL,
+                    stunt_count integer NOT NULL,
+                    stunt_score real NOT NULL
                 ) WITHOUT ROWID
             ');
             $this->bulkInsert($db, 'user_scores', $user_scores);

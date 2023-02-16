@@ -169,6 +169,7 @@ class App
 
         unlink($path);
         rename($flip_path, $path);
+        echo "DB flip completed. DB size: ".number_format(filesize($path)).PHP_EOL;
     }
 
     protected function boot()

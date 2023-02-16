@@ -24,14 +24,15 @@ class TrackController
         $tracks = $this->db->fetchAllAssociative('
             SELECT
                 RANK() OVER (
-                    ORDER BY track_weight DESC
+                    ORDER BY sprint_track_weight DESC
                 ) AS rank,
                 id,
                 name,
-                finished_count,
-                ROUND(1000.0 * track_weight) AS track_weight
-            FROM workshop_weights
-            ORDER BY track_weight DESC
+                sprint_finished_count AS finished_count,
+                ROUND(1000.0 * sprint_track_weight) AS track_weight
+            FROM workshop_levels
+            WHERE is_sprint
+            ORDER BY sprint_track_weight DESC
         ');
 
         $out = $this->twig->render('tracks.twig', [
@@ -47,14 +48,15 @@ class TrackController
         $tracks = $this->db->fetchAllAssociative('
             SELECT
                 RANK() OVER (
-                    ORDER BY finished_count DESC
+                    ORDER BY sprint_finished_count DESC
                 ) AS rank,
                 id,
                 name,
-                finished_count,
-                ROUND(1000.0 * track_weight) AS track_weight
-            FROM workshop_weights
-            ORDER BY finished_count DESC
+                sprint_finished_count AS finished_count,
+                ROUND(1000.0 * sprint_track_weight) AS track_weight
+            FROM workshop_levels
+            WHERE is_sprint
+            ORDER BY sprint_finished_count DESC
         ');
 
         $out = $this->twig->render('tracks.twig', [
@@ -71,16 +73,16 @@ class TrackController
                 WITH t AS (
                     SELECT
                         RANK() OVER (
-                            ORDER BY track_weight DESC
+                            ORDER BY sprint_track_weight DESC
                         ) weight_rank,
                         RANK() OVER (
-                            ORDER BY finished_count DESC
+                            ORDER BY sprint_finished_count DESC
                         ) popular_rank,
                         id,
                         name,
-                        finished_count,
-                        ROUND(1000.0 * track_weight) AS track_weight
-                    FROM workshop_weights
+                        sprint_finished_count AS finished_count,
+                        ROUND(1000.0 * sprint_track_weight) AS track_weight
+                    FROM workshop_levels
                 )
                 SELECT * FROM t
                 WHERE id = ?
@@ -90,17 +92,17 @@ class TrackController
 
         $lb = $this->db->fetchAllAssociative('
                 SELECT
-                    weighted_leaderboard.rank,
-                    weighted_leaderboard.time,
+                    weighted_sprint_leaderboard.rank,
+                    weighted_sprint_leaderboard.time,
                     user_scores.steam_id,
                     user_scores.name,
-                    weighted_leaderboard.workshop_score,
-                    weighted_leaderboard.workshop_score_weighted
-                FROM weighted_leaderboard
+                    weighted_sprint_leaderboard.workshop_score,
+                    weighted_sprint_leaderboard.workshop_score_weighted
+                FROM weighted_sprint_leaderboard
                 INNER JOIN user_scores
-                ON user_scores.steam_id = weighted_leaderboard.steam_id
-                WHERE weighted_leaderboard.level_id = ?
-                ORDER BY weighted_leaderboard.rank ASC
+                ON user_scores.steam_id = weighted_sprint_leaderboard.steam_id
+                WHERE weighted_sprint_leaderboard.level_id = ?
+                ORDER BY weighted_sprint_leaderboard.rank ASC
             ',
             [$id]
         );

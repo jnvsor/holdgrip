@@ -22,17 +22,24 @@ class PlayerController
     public function list(Request $req): Response
     {
         $lb = $this->db->fetchAllAssociative('
-            SELECT
-                rank,
-                steam_id,
-                name,
-                holdboost_score,
-                workshop_count,
-                ROUND(workshop_score_final) AS workshop_final_score
-            FROM user_scores
-            WHERE workshop_score_final > 0
-            AND rank < 1001
-            ORDER BY workshop_final_score DESC
+            WITH leaderboard AS (
+                SELECT
+                    RANK() OVER (
+                        ORDER BY sprint_score DESC
+                    ) AS rank,
+                    user_scores.steam_id,
+                    name,
+                    holdboost_score,
+                    sprint_count,
+                    ROUND(sprint_score) AS sprint_score
+                FROM user_scores
+                WHERE sprint_score > 0
+                GROUP BY user_scores.steam_id
+            )
+
+            SELECT * FROM leaderboard
+            WHERE rank < 1001
+            ORDER BY sprint_score DESC
         ');
 
         $firsts = $this->db->fetchAllAssociative('
@@ -43,10 +50,13 @@ class PlayerController
                 COUNT(*) firsts,
                 user_scores.steam_id,
                 user_scores.name
-            FROM weighted_leaderboard
+            FROM weighted_sprint_leaderboard
             INNER JOIN user_scores
-            ON user_scores.steam_id = weighted_leaderboard.steam_id
-            WHERE weighted_leaderboard.rank = 1
+            ON user_scores.steam_id = weighted_sprint_leaderboard.steam_id
+            INNER JOIN workshop_levels
+            ON workshop_levels.id = weighted_sprint_leaderboard.level_id
+            WHERE weighted_sprint_leaderboard.rank = 1
+            AND workshop_levels.is_sprint
             GROUP BY user_scores.steam_id
             ORDER BY firsts DESC
         ');
@@ -100,33 +110,45 @@ class PlayerController
     public function show(Request $req, $id): Response
     {
         $player = $this->db->fetchAssociative('
+                WITH ranks AS (
+                    SELECT
+                        steam_id,
+                        RANK() OVER (
+                            ORDER BY sprint_score DESC
+                        ) AS sprint_rank
+                    FROM user_scores
+                )
+
                 SELECT
-                    rank,
-                    steam_id,
+                    sprint_rank,
+                    user_scores.steam_id,
                     name,
                     holdboost_score,
-                    workshop_count,
-                    ROUND(workshop_score_final) AS workshop_final_score
+                    sprint_count,
+                    ROUND(sprint_score) AS sprint_score
                 FROM user_scores
-                WHERE steam_id = ?
+                INNER JOIN ranks
+                ON ranks.steam_id = user_scores.steam_id
+                WHERE user_scores.steam_id = ?
             ',
             [$id]
         );
 
         $tracks = $this->db->fetchAllAssociative('
                 SELECT
-                  workshop_weights.id,
-                  workshop_weights.name,
-                  weighted_leaderboard.rank AS place,
-                  weighted_leaderboard.time,
-                  weighted_leaderboard.workshop_score,
-                  ROUND(1000.0 * track_weight) AS track_weight,
-                  ROUND(CAST(weighted_leaderboard.workshop_score_weighted as numeric), 3) AS workshop_score_weighted
-                FROM workshop_weights
-                INNER JOIN weighted_leaderboard
-                ON weighted_leaderboard.level_id = workshop_weights.id
-                WHERE weighted_leaderboard.steam_id = ?
-                ORDER BY track_weight DESC
+                  workshop_levels.id,
+                  workshop_levels.name,
+                  weighted_sprint_leaderboard.rank,
+                  weighted_sprint_leaderboard.time,
+                  weighted_sprint_leaderboard.workshop_score,
+                  ROUND(1000.0 * sprint_track_weight) AS sprint_track_weight,
+                  ROUND(CAST(weighted_sprint_leaderboard.workshop_score_weighted as numeric), 3) AS workshop_score_weighted
+                FROM workshop_levels
+                INNER JOIN weighted_sprint_leaderboard
+                ON weighted_sprint_leaderboard.level_id = workshop_levels.id
+                WHERE weighted_sprint_leaderboard.steam_id = ?
+                AND workshop_levels.is_sprint
+                ORDER BY sprint_track_weight DESC
             ',
             [$id]
         );
