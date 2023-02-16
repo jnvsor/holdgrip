@@ -38,7 +38,7 @@
             type: 'pie',
             data: {{ piedata | json_encode | raw }},
             options: {
-                aspectRatio: 0.5,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'bottom',
