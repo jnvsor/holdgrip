@@ -87,7 +87,9 @@ class DataUpdater
                         SELECT
                             id,
                             finished_count,
-                            (top_weight / 120000 * :top_weight) + (unfinished_weight  * :unfinished_weight) AS track_weight
+                            CASE WHEN finished_count = 0 THEN 0
+                                ELSE (top_weight / 120000 * :top_weight) + (unfinished_weight  * :unfinished_weight)
+                            END AS track_weight
                         FROM stats
                     )
                 ',
