@@ -104,6 +104,17 @@ class DataUpdater
 
         $this->xdb->executeUpdate('
             CREATE TEMPORARY TABLE weighted_levels AS (
+                WITH latestFiles AS (
+                    SELECT author_steam_id, file_name, MAX(time_created) as t
+                    FROM workshop_level_details
+                    GROUP BY author_steam_id, file_name
+                ),
+                validIds AS (
+                    SELECT level_id
+                    FROM workshop_level_details
+                    WHERE (author_steam_id, file_name, time_created) IN(SELECT * FROM latestFiles)
+                )
+
                 SELECT
                     workshop_levels.id,
                     workshop_levels.name,
@@ -123,6 +134,7 @@ class DataUpdater
                 ON challenge_stats.id = workshop_levels.id
                 LEFT JOIN stunt_stats
                 ON stunt_stats.id = workshop_levels.id
+                WHERE workshop_levels.id IN(SELECT * FROM validIds)
             )
         ');
 
