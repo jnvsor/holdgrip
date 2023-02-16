@@ -13,7 +13,7 @@
         {% for track in tracks -%}
             <tr>
                 <td>{{ track.rank | number_format }}</td>
-                <td class="text"><a href="/tracks/{{ track.id }}">{{ track.name }}</a></td>
+                <td class="text"><a href="/tracks/{{ type.name }}/{{ track.id }}">{{ track.name }}</a></td>
                 <td>{{ track.finished_count | number_format }}</td>
                 <td>{{ track.track_weight | number_format }}</td>
             </tr>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=1024">
-    <title>{% if title is defined %}{{ title }} | {% endif %}HoldGrip</title>
+    <title>{% if title is not empty %}{{ title }} | {% endif %}HoldGrip</title>
     <link rel="stylesheet" type="text/css" href="/style.css">
 </head>
 <body>
@@ -11,8 +11,8 @@
         <div class="wrapper">
             <h1><a href="/">HoldGrip</a></h1>
             <nav>
-                <a href="/tracks">Tracks by weight</a>
-                <a href="/tracks/popular">Popular tracks</a>
+                <a href="/challenge">Challenge</a>
+                <a href="/stunt">Stunt</a>
             </nav>
         </div>
     </header>

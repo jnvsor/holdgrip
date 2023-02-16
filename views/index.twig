@@ -1,74 +1,88 @@
 {% extends 'base.twig' %}
 
 {% block content %}
-<main class="sidebar">
-    <aside>
-        <div id="chartcontainer" style="height: 650px;">
-            <canvas id="piechart"></canvas>
-        </div>
 
-        <table class="stats">
-            <tr>
-                <th class="tw25">Place</th>
-                <th class="tw50">Name</th>
-                <th class="tw25">Firsts</th>
-            </tr>
-            {% for row in firsts -%}
+<main>
+    <div class="sidebar">
+        <aside>
+            <div id="chartcontainer" style="height: 650px;">
+                <canvas id="piechart"></canvas>
+            </div>
+
+            <table class="stats">
                 <tr>
-                    <td>{{ row.rank }}</td>
-                    <td class="text">
-                        {%- if row.steam_id -%}
-                            <a href="/player/{{ row.steam_id }}">{{ row.name }}</a>
-                        {%- else -%}
-                            {{ row.name }}
-                        {%- endif -%}
-                    </td>
-                    <td>{{ row.firsts | number_format }}</td>
+                    <th class="tw25">Place</th>
+                    <th class="tw50">Name</th>
+                    <th class="tw25">Firsts</th>
                 </tr>
-            {% endfor %}
-        </table>
-    </aside>
+                {% for row in firsts -%}
+                    <tr>
+                        <td>{{ row.rank }}</td>
+                        <td class="text">
+                            {%- if row.steam_id -%}
+                                <a href="/player/{{ row.steam_id }}/{{ type.name }}">{{ row.name }}</a>
+                            {%- else -%}
+                                {{ row.name }}
+                            {%- endif -%}
+                        </td>
+                        <td>{{ row.firsts | number_format }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-    (function () {
-        const ctx = document.getElementById('piechart');
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+            (function () {
+                const ctx = document.getElementById('piechart');
 
-        new Chart(ctx, {
-            type: 'pie',
-            data: {{ piedata | json_encode | raw }},
-            options: {
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#c8c8c8'
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {{ piedata | json_encode | raw }},
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#c8c8c8'
+                                }
+                            }
                         }
                     }
-                }
-            }
-        });
-    })()
-    </script>
+                });
+            })()
+            </script>
+        </aside>
 
-    <table class="stats">
-        <tr>
-            <th class="tw10">Place</th>
-            <th>Name</th>
-            <th class="tw15">Holdboost</th>
-            <th class="tw10">Completed</th>
-            <th class="tw15">Score</th>
-        </tr>
-        {% for row in leaderboard -%}
-            <tr>
-                <td>{{ row.rank | number_format }}</td>
-                <td class="text"><a href="/player/{{ row.steam_id }}">{{ row.name }}</a></td>
-                <td><a href="http://holdboost.com/Player?steamID={{ row.steam_id }}" target="_blank">{{ row.holdboost_score | number_format }}</a></td>
-                <td>{{ row.sprint_count | number_format }}</td>
-                <td>{{ row.sprint_score | number_format }}</td>
-            </tr>
-        {% endfor %}
-    </table>
+        <div>
+            {% if not is_index %}
+                <h2 class="title">{{ type.label }} leaderboard</h2>
+            {% endif %}
+
+            <nav>
+                <a class="button" href="/tracks/{{ type.name }}">{{ type.label }} tracks by weight</a>
+                <a class="button" href="/tracks/{{ type.name }}/popular">{{ type.label }} tracks by popularity</a>
+            </nav>
+
+            <table class="stats">
+                <tr>
+                    <th class="tw10">Place</th>
+                    <th>Name</th>
+                    <th class="tw15">Holdboost</th>
+                    <th class="tw10">Completed</th>
+                    <th class="tw15">Score</th>
+                </tr>
+                {% for row in leaderboard -%}
+                    <tr>
+                        <td>{{ row.rank | number_format }}</td>
+                        <td class="text"><a href="/player/{{ row.steam_id }}/{{ type.name }}">{{ row.name }}</a></td>
+                        <td><a href="http://holdboost.com/Player?steamID={{ row.steam_id }}" target="_blank">{{ row.holdboost_score | number_format }}</a></td>
+                        <td>{{ row.count | number_format }}</td>
+                        <td>{{ row.score | number_format }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
 </main>
 {% endblock %}

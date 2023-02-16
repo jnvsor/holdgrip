@@ -4,6 +4,7 @@ namespace DHB\Controller;
 
 use DHB\TimeFormatter;
 use Doctrine\DBAL\Connection;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Environment;
@@ -12,78 +13,128 @@ class TrackController
 {
     private $db;
     private $twig;
+    private $lb_types;
 
-    public function __construct(Connection $db, Environment $twig)
+    public function __construct(Connection $db, Environment $twig, array $lb_types)
     {
         $this->db = $db;
         $this->twig = $twig;
+        $this->lb_types = $lb_types;
     }
 
-    public function list(Request $req): Response
+    public function list(Request $req, string $type): Response
     {
+        if (!isset($this->lb_types[$type])) {
+            throw new InvalidArgumentException();
+        }
+
         $tracks = $this->db->fetchAllAssociative('
+            WITH levels AS (
+                SELECT
+                    id,
+                    name,
+                    '.$type.'_finished_count AS finished_count,
+                    '.$type.'_track_weight AS track_weight
+                FROM workshop_levels
+                WHERE is_'.$type.'
+            )
+
             SELECT
                 RANK() OVER (
-                    ORDER BY sprint_track_weight DESC
+                    ORDER BY track_weight DESC
                 ) AS rank,
                 id,
                 name,
-                sprint_finished_count AS finished_count,
-                ROUND(1000.0 * sprint_track_weight) AS track_weight
-            FROM workshop_levels
-            WHERE is_sprint
-            ORDER BY sprint_track_weight DESC
+                finished_count,
+                ROUND(1000.0 * track_weight) AS track_weight
+            FROM levels
+            ORDER BY track_weight DESC
         ');
 
         $out = $this->twig->render('tracks.twig', [
-            'title' => 'Tracks',
+            'title' => $this->lb_types[$type]['label'].' tracks',
             'tracks' => $tracks,
+            'type' => $this->lb_types[$type],
         ]);
 
         return new Response($out);
     }
 
-    public function popular(Request $req): Response
+    public function popular(Request $req, string $type): Response
     {
+        if (!isset($this->lb_types[$type])) {
+            throw new InvalidArgumentException();
+        }
+
         $tracks = $this->db->fetchAllAssociative('
+            WITH levels AS (
+                SELECT
+                    id,
+                    name,
+                    '.$type.'_finished_count AS finished_count,
+                    '.$type.'_track_weight AS track_weight
+                FROM workshop_levels
+                WHERE is_'.$type.'
+            )
+
             SELECT
                 RANK() OVER (
-                    ORDER BY sprint_finished_count DESC
+                    ORDER BY finished_count DESC
                 ) AS rank,
                 id,
                 name,
-                sprint_finished_count AS finished_count,
-                ROUND(1000.0 * sprint_track_weight) AS track_weight
-            FROM workshop_levels
-            WHERE is_sprint
-            ORDER BY sprint_finished_count DESC
+                finished_count,
+                ROUND(1000.0 * track_weight) AS track_weight
+            FROM levels
+            ORDER BY finished_count DESC
         ');
 
         $out = $this->twig->render('tracks.twig', [
-            'title' => 'Popular tracks',
+            'title' => 'Popular '.strtolower($this->lb_types[$type]['label']).' tracks',
             'tracks' => $tracks,
+            'type' => $this->lb_types[$type],
         ]);
 
         return new Response($out);
     }
 
-    public function show(Request $req, $id): Response
+    public function show(Request $req, string $type, int $id): Response
     {
+        if (!isset($this->lb_types[$type])) {
+            throw new InvalidArgumentException();
+        }
+
         $track = $this->db->fetchAssociative('
-                WITH t AS (
+                WITH levels AS (
+                    SELECT
+                        id,
+                        name,
+                        is_sprint,
+                        is_challenge,
+                        is_stunt,
+                        '.$type.'_finished_count AS finished_count,
+                        '.$type.'_track_weight AS track_weight
+                    FROM workshop_levels
+                    WHERE is_'.$type.'
+                ),
+                t AS (
                     SELECT
                         RANK() OVER (
-                            ORDER BY sprint_track_weight DESC
+                            ORDER BY track_weight DESC
                         ) weight_rank,
                         RANK() OVER (
-                            ORDER BY sprint_finished_count DESC
+                            ORDER BY finished_count DESC
                         ) popular_rank,
                         id,
                         name,
-                        sprint_finished_count AS finished_count,
-                        ROUND(1000.0 * sprint_track_weight) AS track_weight
-                    FROM workshop_levels
+                        is_sprint,
+                        is_challenge,
+                        is_stunt,
+                        finished_count AS finished_count,
+                        ROUND(1000.0 * track_weight) AS track_weight
+                    FROM levels
                 )
+
                 SELECT * FROM t
                 WHERE id = ?
             ',
@@ -91,30 +142,49 @@ class TrackController
         );
 
         $lb = $this->db->fetchAllAssociative('
+                WITH lb AS (
+                    SELECT
+                        level_id,
+                        steam_id,
+                        rank,
+                        '.$this->lb_types[$type]['score_field'].' AS scorefield,
+                        workshop_score,
+                        workshop_score_weighted
+                    FROM weighted_'.$type.'_leaderboard
+                )
+
                 SELECT
-                    weighted_sprint_leaderboard.rank,
-                    weighted_sprint_leaderboard.time,
-                    user_scores.steam_id,
-                    user_scores.name,
-                    weighted_sprint_leaderboard.workshop_score,
-                    weighted_sprint_leaderboard.workshop_score_weighted
-                FROM weighted_sprint_leaderboard
-                INNER JOIN user_scores
-                ON user_scores.steam_id = weighted_sprint_leaderboard.steam_id
-                WHERE weighted_sprint_leaderboard.level_id = ?
-                ORDER BY weighted_sprint_leaderboard.rank ASC
+                    lb.rank,
+                    lb.scorefield,
+                    users.steam_id,
+                    users.name,
+                    lb.workshop_score,
+                    lb.workshop_score_weighted
+                FROM lb
+                INNER JOIN users
+                ON users.steam_id = lb.steam_id
+                WHERE lb.level_id = ?
+                ORDER BY lb.rank ASC
             ',
             [$id]
         );
 
-        foreach ($lb as $index => $row) {
-            $lb[$index]['time'] = TimeFormatter::format($row['time']);
+        if ($this->lb_types[$type]['score_field'] === 'time') {
+            foreach ($lb as $index => $row) {
+                $lb[$index]['scorefield'] = TimeFormatter::format($row['scorefield']);
+            }
+        } else {
+            foreach ($lb as $index => $row) {
+                $lb[$index]['scorefield'] = number_format($row['scorefield']);
+            }
         }
 
         $out = $this->twig->render('track.twig', [
-            'title' => 'Track '.$track['name'],
+            'title' => $this->lb_types[$type]['label'].' track '.$track['name'],
             'track' => $track,
             'leaderboard' => $lb,
+            'type' => $this->lb_types[$type],
+            'types' => $this->lb_types,
         ]);
 
         return new Response($out);

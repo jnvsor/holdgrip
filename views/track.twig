@@ -1,46 +1,57 @@
 {% extends 'base.twig' %}
 
 {% block content %}
-<h2>Track {{ track.name }}</h2>
-<main class="sidebar">
-    <aside>
+<h2>{{ track.name }}</h2>
+
+<main>
+    <nav>
+        {% for t in types %}
+            {% if track['is_' ~ t.name] %}
+                <a class="button{% if t == type %} active{% endif %}" href="/tracks/{{ t.name }}/{{ track.id }}">{{ t.label }} mode</a>
+            {% endif %}
+        {% endfor %}
+    </nav>
+
+    <div class="sidebar">
+        <aside>
+            <table class="stats">
+                <tr>
+                    <th>Completions</th>
+                    <td>{{ track.finished_count | number_format }}</td>
+                </tr>
+                <tr>
+                    <th>Popularity rank</th>
+                    <td>{{ track.popular_rank | number_format }}</td>
+                </tr>
+                <tr>
+                    <th>Track weight</th>
+                    <td>{{ track.track_weight | number_format }}</td>
+                </tr>
+                <tr>
+                    <th>Weight Rank</th>
+                    <td>{{ track.weight_rank | number_format }}</td>
+                </tr>
+            </table>
+        </aside>
+
         <table class="stats">
             <tr>
-                <th>Completions</th>
-                <td>{{ track.finished_count | number_format }}</td>
+                <th class="tw10">Place</th>
+                <th>Name</th>
+                <th class="tw15">{{ type.score_label }}</th>
+                <th class="tw10">Raw score</th>
+                <th class="tw10">Score</th>
             </tr>
-            <tr>
-                <th>Popularity rank</th>
-                <td>{{ track.popular_rank | number_format }}</td>
-            </tr>
-            <tr>
-                <th>Track weight</th>
-                <td>{{ track.track_weight | number_format }}</td>
-            </tr>
-            <tr>
-                <th>Weight Rank</th>
-                <td>{{ track.weight_rank | number_format }}</td>
-            </tr>
+            {% for row in leaderboard -%}
+                <tr>
+                    <td>{{ row.rank | number_format }}</td>
+                    <td class="text"><a href="/player/{{ row.steam_id }}/{{ type.name }}">{{ row.name }}</a></td>
+                    <td>{{ row.scorefield }}</td>
+                    <td>{{ row.workshop_score | number_format }}</td>
+                    <td>{{ row.workshop_score_weighted | number_format }}</td>
+                </tr>
+            {% endfor %}
         </table>
-    </aside>
-
-    <table class="stats">
-        <tr>
-            <th class="tw10">Place</th>
-            <th>Name</th>
-            <th class="tw15">Time</th>
-            <th class="tw10">Raw score</th>
-            <th class="tw10">Score</th>
-        </tr>
-        {% for row in leaderboard -%}
-            <tr>
-                <td>{{ row.rank | number_format }}</td>
-                <td class="text"><a href="/player/{{ row.steam_id }}">{{ row.name }}</a></td>
-                <td>{{ row.time }}</td>
-                <td>{{ row.workshop_score | number_format }}</td>
-                <td>{{ row.workshop_score_weighted | number_format }}</td>
-            </tr>
-        {% endfor %}
-    </table>
+    </div>
 </main>
 {% endblock %}

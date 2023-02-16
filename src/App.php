@@ -103,11 +103,19 @@ class App
         });
 
         // Controllers
-        $this->container['controller.player'] = fn($c) => new PlayerController($c['db'], $c['twig']);
-        $this->container['controller.track'] = fn($c) => new TrackController($c['db'], $c['twig']);
+        $this->container['controller.player'] = fn($c) => new PlayerController(
+            $c['db'],
+            $c['twig'],
+            $c['config']['lb_types']
+        );
+        $this->container['controller.track'] = fn($c) => new TrackController(
+            $c['db'],
+            $c['twig'],
+            $c['config']['lb_types']
+        );
 
         // Updater
-        $this->container['updater'] = fn($c) => new DataUpdater($c['external_db']);
+        $this->container['updater'] = fn($c) => new DataUpdater($c['external_db'], $c['config']['lb_types']);
 
         // Config
         $this->container['config'] = $this->getConfig();
@@ -137,25 +145,63 @@ class App
                 'driver' => 'pdo_pgsql',
             ],
             'routes' => [
-                'index' => [
-                    'url' => '/',
-                    'defaults' => ['_controller' => 'controller.player::list']
-                ],
                 'player' => [
-                    'url' => '/player/{id}',
-                    'defaults' => ['_controller' => 'controller.player::show']
+                    'url' => '/player/{id}/{type}',
+                    'defaults' => [
+                        '_controller' => 'controller.player::show',
+                        'type' => 'sprint',
+                    ]
                 ],
                 'tracks' => [
-                    'url' => '/tracks',
-                    'defaults' => ['_controller' => 'controller.track::list']
+                    'url' => '/tracks/{type}',
+                    'defaults' => [
+                        '_controller' => 'controller.track::list',
+                        'type' => 'sprint',
+                    ],
                 ],
                 'popular_tracks' => [
-                    'url' => '/tracks/popular',
-                    'defaults' => ['_controller' => 'controller.track::popular']
+                    'url' => '/tracks/{type}/popular',
+                    'defaults' => [
+                        '_controller' => 'controller.track::popular',
+                        'type' => 'sprint',
+                    ],
                 ],
                 'track' => [
-                    'url' => '/tracks/{id}',
-                    'defaults' => ['_controller' => 'controller.track::show']
+                    'url' => '/tracks/{type}/{id}',
+                    'defaults' => [
+                        '_controller' => 'controller.track::show',
+                        'type' => 'sprint',
+                    ],
+                ],
+                'index' => [
+                    'url' => '/{type}',
+                    'defaults' => [
+                        '_controller' => 'controller.player::list',
+                        'type' => 'sprint',
+                    ],
+                ],
+            ],
+            'lb_types' => [
+                'sprint' => [
+                    'name' => 'sprint',
+                    'label' => 'Sprint',
+                    'top_size' => 30,
+                    'score_field' => 'time',
+                    'score_label' => 'Time',
+                ],
+                'challenge' => [
+                    'name' => 'challenge',
+                    'label' => 'Challenge',
+                    'top_size' => 10,
+                    'score_field' => 'time',
+                    'score_label' => 'Time',
+                ],
+                'stunt' => [
+                    'name' => 'stunt',
+                    'label' => 'Stunt',
+                    'top_size' => 10,
+                    'score_field' => 'score',
+                    'score_label' => 'eV',
                 ],
             ],
             'debug' => (bool) getenv('DEBUG'),

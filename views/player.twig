@@ -3,40 +3,58 @@
 {% block content %}
 <h2>{{ player.name }} stats</h2>
 <main>
-    <table class="stats small">
-        <tr>
-            <th>Sprint rank</th>
-            <td>{{ player.sprint_rank }}</td>
-        </tr>
-        <tr>
-            <th>Sprint tracks completed</th>
-            <td>{{ player.sprint_count | number_format }}</td>
-        </tr>
-        <tr>
-            <th>Sprint score</th>
-            <td>{{ player.sprint_score | number_format }}</td>
-        </tr>
-        <tr>
-            <th>Holdboost</th>
-            <td><a href="http://holdboost.com/Player?steamID={{ player.steam_id }}" target="_blank">{{ player.holdboost_score | number_format }}</a></td>
-        </tr>
-    </table>
+    <div class="playerstats">
+        <div class="row">
+            {% for t in types %}
+                <div>
+                    <table class="stats small">
+                        <tr>
+                            <th>{{ t.label }} rank</th>
+                            <td>{{ player[t.name ~ '_rank'] }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t.label }} completions</th>
+                            <td>{{ player[t.name ~ '_count'] | number_format }}</td>
+                        </tr>
+                        <tr>
+                            <th>{{ t.label }} score</th>
+                            <td>{{ player[t.name ~ '_score'] | number_format }}</td>
+                        </tr>
+                        {% if t.name == 'sprint' %}
+                            <tr>
+                                <th>Holdboost</th>
+                                <td><a href="http://holdboost.com/Player?steamID={{ player.steam_id }}" target="_blank">{{ player.holdboost_score | number_format }}</a></td>
+                            </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="row">
+            {% for t in types %}
+                <div>
+                    <a class="button{% if t == type %} active{% endif %}" href="/player/{{ player.steam_id }}/{{ t.name }}">View {{ t.label | lower }} tracks</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
 
+    <h3>{{ type.label }} tracks</h3>
     <table class="stats">
         <tr>
             <th>Track</th>
             <th class="tw10">Track weight</th>
             <th class="tw10">Placement</th>
-            <th class="tw15">Time</th>
+            <th class="tw15">{{ type.score_label }}</th>
             <th class="tw10">Raw score</th>
             <th class="tw10">Score</th>
         </tr>
         {% for track in tracks -%}
             <tr>
-                <td class="text"><a href="/tracks/{{ track.id }}">{{ track.name }}</a></td>
-                <td>{{ track.sprint_track_weight | number_format }}</td>
+                <td class="text"><a href="/tracks/{{ type.name }}/{{ track.id }}">{{ track.name }}</a></td>
+                <td>{{ track.track_weight | number_format }}</td>
                 <td>{{ track.rank | number_format }}</td>
-                <td>{{ track.time }}</td>
+                <td>{{ track.scorefield }}</td>
                 <td>{{ track.workshop_score | number_format }}</td>
                 <td>{{ track.workshop_score_weighted | number_format }}</td>
             </tr>

@@ -1,6 +1,8 @@
 @import 'node_modules/normalize.css/normalize';
 
 $gutter-width: 30px;
+$color: #c8c8c8;
+$background: #222;
 
 html,
 body {
@@ -9,8 +11,8 @@ body {
 
 body {
     font-family: sans-serif;
-    background: #222;
-    color: #c8c8c8;
+    background: $background;
+    color: $color;
     padding: 0 $gutter-width;
 }
 
@@ -26,8 +28,32 @@ a:hover {
     text-decoration: underline;
 }
 
+a.button {
+    padding: ($gutter-width / 4);
+    border: 1px solid $color;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-block;
+    background: darken($background, 5%);
+    color: $color;
+    transition: background-color 0.3s;
+
+    &:hover {
+        text-decoration: none;
+        background: lighten($background, 5%);
+    }
+
+    &.active {
+        background: lighten($background, 10%);
+    }
+}
+
 h1 {
     margin: ($gutter-width / 2) 0;
+}
+
+h2.title {
+    margin-top: 0;
 }
 
 .wrapper {
@@ -55,7 +81,11 @@ header {
     }
 }
 
-main.sidebar {
+main nav {
+    margin-bottom: ($gutter-width / 2);
+}
+
+main .sidebar {
     display: flex;
     flex-flow: row-reverse nowrap;
     align-items: start;
@@ -118,6 +148,26 @@ table.stats {
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+    }
+}
+
+.playerstats {
+    margin: 0 (-($gutter-width / 2)) $gutter-width;
+
+    > .row {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: start;
+
+        > div {
+            flex: 1 0 0;
+            padding: 0 ($gutter-width / 2);
+        }
+    }
+
+    table.stats {
+        margin-bottom: 1em;
+        width: 100%;
     }
 }
 

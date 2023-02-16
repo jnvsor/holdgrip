@@ -7,21 +7,12 @@ use Doctrine\DBAL\Connection;
 class DataUpdater
 {
     private $xdb;
+    private $lb_types;
 
-    const LB_TYPES = [
-        'sprint' => [
-            'score_field' => 'time',
-            'top_size' => 30,
-        ],
-        'challenge' => [
-            'score_field' => 'time',
-            'top_size' => 10,
-        ],
-    ];
-
-    public function __construct(Connection $external_db)
+    public function __construct(Connection $external_db, array $lb_types)
     {
         $this->xdb = $external_db;
+        $this->lb_types = $lb_types;
     }
 
     public function buildDb(Connection $db)
@@ -52,7 +43,7 @@ class DataUpdater
             )
         ');
 
-        foreach (self::LB_TYPES as $type => $opts) {
+        foreach ($this->lb_types as $type => $opts) {
             $this->xdb->executeUpdate('
                     CREATE TEMPORARY TABLE '.$type.'_stats AS (
                         WITH lb AS NOT MATERIALIZED (
@@ -116,13 +107,15 @@ class DataUpdater
                     sprint_stats.track_weight AS sprint_track_weight,
                     challenge_stats.finished_count AS challenge_finished_count,
                     challenge_stats.track_weight AS challenge_track_weight,
-                    0 AS stunt_finished_count,
-                    0 AS stunt_track_weight
+                    stunt_stats.finished_count AS stunt_finished_count,
+                    stunt_stats.track_weight AS stunt_track_weight
                 FROM workshop_levels
                 LEFT JOIN sprint_stats
                 ON sprint_stats.id = workshop_levels.id
                 LEFT JOIN challenge_stats
                 ON challenge_stats.id = workshop_levels.id
+                LEFT JOIN stunt_stats
+                ON stunt_stats.id = workshop_levels.id
             )
         ');
 
@@ -135,7 +128,7 @@ class DataUpdater
             )
         ');
 
-        foreach (self::LB_TYPES as $type => $opts) {
+        foreach ($this->lb_types as $type => $opts) {
             $this->xdb->executeUpdate('
                 CREATE TEMPORARY TABLE weighted_'.$type.'_leaderboard AS (
                     WITH lb AS NOT MATERIALIZED (
@@ -209,18 +202,34 @@ class DataUpdater
                     COALESCE(sprint.score, 0) AS sprint_score,
                     COALESCE(challenge.count, 0) AS challenge_count,
                     COALESCE(challenge.score, 0) AS challenge_score,
-                    0 AS stunt_count,
-                    0 AS stunt_score
+                    COALESCE(stunt.count, 0) AS stunt_count,
+                    COALESCE(stunt.score, 0) AS stunt_score
                 FROM user_weights
                 LEFT JOIN sprint_scores AS sprint
                 ON user_weights.steam_id = sprint.steam_id
                 LEFT JOIN challenge_scores AS challenge
                 ON user_weights.steam_id = challenge.steam_id
+                LEFT JOIN stunt_scores AS stunt
+                ON user_weights.steam_id = stunt.steam_id
             )
         ');
 
         $db->transactional(function ($db) {
-            $weighted_levels = $this->xdb->executeQuery('SELECT * FROM weighted_levels');
+            $weighted_levels = $this->xdb->executeQuery('
+                SELECT
+                    id,
+                    name,
+                    CAST(is_sprint AS integer) AS is_sprint,
+                    CAST(is_challenge AS integer) AS is_challenge,
+                    CAST(is_stunt AS integer) AS is_stunt,
+                    sprint_finished_count,
+                    sprint_track_weight,
+                    challenge_finished_count,
+                    challenge_track_weight,
+                    stunt_finished_count,
+                    stunt_track_weight
+                FROM weighted_levels
+            ');
             $db->executeUpdate('DROP TABLE IF EXISTS workshop_levels');
             // *_finished_count fields are cached here for performance purposes
             $db->executeUpdate('
@@ -238,13 +247,14 @@ class DataUpdater
                     stunt_track_weight real NULL
                 ) WITHOUT ROWID
             ');
+
             $this->bulkInsert($db, 'workshop_levels', $weighted_levels);
 
             $user_scores = $this->xdb->executeQuery('SELECT * FROM user_scores');
-            $db->executeUpdate('DROP TABLE IF EXISTS user_scores');
+            $db->executeUpdate('DROP TABLE IF EXISTS users');
             // *_count fields are cached here for performance purposes
             $db->executeUpdate('
-                CREATE TABLE IF NOT EXISTS user_scores (
+                CREATE TABLE IF NOT EXISTS users (
                     steam_id integer NOT NULL PRIMARY KEY,
                     name text NOT NULL,
                     holdboost_score integer NOT NULL,
@@ -256,11 +266,11 @@ class DataUpdater
                     stunt_score real NOT NULL
                 ) WITHOUT ROWID
             ');
-            $this->bulkInsert($db, 'user_scores', $user_scores);
+            $this->bulkInsert($db, 'users', $user_scores);
 
-            foreach (self::LB_TYPES as $type => $opts) {
+            foreach ($this->lb_types as $type => $opts) {
                 $weighted_leaderboard = $this->xdb->executeQuery('
-                    SELECT level_id, steam_id, rank, time, workshop_score, workshop_score_weighted
+                    SELECT level_id, steam_id, rank, '.$opts['score_field'].', workshop_score, workshop_score_weighted
                     FROM weighted_'.$type.'_leaderboard'
                 );
 
