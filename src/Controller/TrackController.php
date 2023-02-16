@@ -37,9 +37,10 @@ class TrackController
             )
 
             SELECT
-                RANK() OVER (
-                    ORDER BY track_weight DESC
-                ) AS rank,
+                CASE WHEN track_weight
+                    THEN RANK() OVER (ORDER BY track_weight DESC)
+                    ELSE NULL
+                END AS rank,
                 id,
                 name,
                 finished_count,
@@ -71,9 +72,10 @@ class TrackController
             )
 
             SELECT
-                RANK() OVER (
-                    ORDER BY finished_count DESC
-                ) AS rank,
+                CASE WHEN finished_count
+                    THEN RANK() OVER (ORDER BY finished_count DESC)
+                    ELSE NULL
+                END AS rank,
                 id,
                 name,
                 finished_count,

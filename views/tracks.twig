@@ -12,10 +12,10 @@
         </tr>
         {% for track in tracks -%}
             <tr>
-                <td>{{ track.rank | number_format }}</td>
+                <td>{% if track.rank is not null %}{{ track.rank | number_format }}{% endif %}</td>
                 <td class="text"><a href="/tracks/{{ type.name }}/{{ track.id }}">{{ track.name }}</a></td>
                 <td>{{ track.finished_count | number_format }}</td>
-                <td>{{ track.track_weight | number_format }}</td>
+                <td>{% if track.track_weight is not null %}{{ track.track_weight | number_format }}{% endif %}</td>
             </tr>
         {% endfor %}
     </table>
