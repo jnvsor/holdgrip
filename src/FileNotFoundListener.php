@@ -39,7 +39,7 @@ class FileNotFoundListener implements EventSubscriberInterface
         $event->setResponse(new Response($out, 404));
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             KernelEvents::EXCEPTION => 'handle404',

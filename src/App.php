@@ -109,15 +109,17 @@ class App
             null,
             $c['config']['debug']
         );
-        $this->container->extend('dispatcher', function ($dispatcher, $c) {
-            $dispatcher->addSubscriber($c['router_listener']);
-            return $dispatcher;
-        });
         $this->container['404_listener'] = fn($c) => new FileNotFoundListener($c['twig']);
         $this->container['cache_listener'] = fn($c) => new CacheListener(
             $c['config']['db_lifetime'],
             filemtime($c['config']['db']['path'])
         );
+        $this->container->extend('dispatcher', function ($dispatcher, $c) {
+            $dispatcher->addSubscriber($c['router_listener']);
+            $dispatcher->addSubscriber($c['404_listener']);
+            $dispatcher->addSubscriber($c['cache_listener']);
+            return $dispatcher;
+        });
 
         // Controllers
         $this->container['controller.player'] = fn($c) => new PlayerController(
@@ -292,8 +294,6 @@ class App
         }
 
         $this->container['routes'] = $this->getRoutes();
-        $this->container['dispatcher']->addSubscriber($this->container['404_listener']);
-        $this->container['dispatcher']->addSubscriber($this->container['cache_listener']);
     }
 
     public function handle(Request $req): Response

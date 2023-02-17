@@ -48,6 +48,8 @@ class PlayerController
                 FROM typelb
                 WHERE score > 0
                 GROUP BY steam_id
+                ORDER BY score DESC
+                LIMIT 1100
             )
 
             SELECT * FROM leaderboard

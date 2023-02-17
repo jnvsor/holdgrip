@@ -30,7 +30,7 @@ class CacheListener implements EventSubscriberInterface
             ->setPublic();
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             KernelEvents::RESPONSE => 'add_cache',
