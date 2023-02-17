@@ -1,8 +1,8 @@
 <?php
 
-namespace DHB\Controller;
+namespace HoldGrip\Controller;
 
-use DHB\TimeFormatter;
+use HoldGrip\TimeFormatter;
 use Doctrine\DBAL\Connection;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;

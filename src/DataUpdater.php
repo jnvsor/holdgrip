@@ -1,6 +1,6 @@
 <?php
 
-namespace DHB;
+namespace HoldGrip;
 
 use Doctrine\DBAL\Connection;
 

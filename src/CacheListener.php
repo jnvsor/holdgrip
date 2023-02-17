@@ -1,6 +1,6 @@
 <?php
 
-namespace DHB;
+namespace HoldGrip;
 
 use DateInterval;
 use DateTimeImmutable;

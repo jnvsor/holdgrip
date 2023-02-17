@@ -1,6 +1,6 @@
 <?php
 
-namespace DHB;
+namespace HoldGrip;
 
 final class TimeFormatter
 {

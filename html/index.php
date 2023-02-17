@@ -2,7 +2,7 @@
 
 require dirname(__DIR__).'/vendor/autoload.php';
 
-$app = new DHB\App();
+$app = new HoldGrip\App();
 
 $req = Symfony\Component\HttpFoundation\Request::createFromGlobals();
 

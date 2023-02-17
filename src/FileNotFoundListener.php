@@ -1,8 +1,8 @@
 <?php
 
-namespace DHB;
+namespace HoldGrip;
 
-use DHB\Controller\TrackController;
+use HoldGrip\Controller\TrackController;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;

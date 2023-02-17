@@ -1,12 +1,12 @@
 <?php
 
-namespace DHB;
+namespace HoldGrip;
 
-use DHB\Controller\PlayerController;
-use DHB\Controller\TrackController;
-use DHB\CacheListener;
-use DHB\DataUpdater;
-use DHB\FileNotFoundListener;
+use HoldGrip\Controller\PlayerController;
+use HoldGrip\Controller\TrackController;
+use HoldGrip\CacheListener;
+use HoldGrip\DataUpdater;
+use HoldGrip\FileNotFoundListener;
 use Doctrine\DBAL\Configuration as DBALConfig;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\DebugStack;
@@ -146,11 +146,11 @@ class App
                 'cache' => dirname(__DIR__).'/var/twig',
             ],
             'db' => [
-                'path' => dirname(__DIR__).'/var/db/dhb.sqlite',
+                'path' => dirname(__DIR__).'/var/db/holdgrip.sqlite',
                 'driver' => 'pdo_sqlite',
             ],
             'flip_db' => [
-                'path' => dirname(__DIR__).'/var/db/dhb.flip.sqlite',
+                'path' => dirname(__DIR__).'/var/db/holdgrip.flip.sqlite',
                 'driver' => 'pdo_sqlite',
             ],
             'external_db' => [

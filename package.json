@@ -1,9 +1,10 @@
 {
-  "devDependencies": {
-    "node-sass": "^8",
-    "normalize.css": "^8"
-  },
-  "scripts": {
-    "build": "node-sass --recursive --output-style compressed sass/ --output html/"
-  }
+    "name": "holdgrip",
+    "devDependencies": {
+        "node-sass": "^8",
+        "normalize.css": "^8"
+    },
+    "scripts": {
+        "build": "node-sass --recursive --output-style compressed sass/ --output html/"
+    }
 }

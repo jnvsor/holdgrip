@@ -1,6 +1,6 @@
 <?php
 
-namespace DHB;
+namespace HoldGrip;
 
 use Pimple\Container;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver as BaseResolver;
