@@ -60,8 +60,8 @@ h1 {
     }
 
     img {
-        height: 40px + $gutter-width;
-        margin: (-$gutter-width / 2) 0;
+        height: 90px;
+        margin: -10px 0 (10px + 40px - 90px);
         vertical-align: middle;
     }
 }
