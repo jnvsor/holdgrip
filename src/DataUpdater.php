@@ -17,9 +17,26 @@ class DataUpdater
 
     public function buildDb(Connection $db)
     {
-        echo "Starting DB build".PHP_EOL;
+        echo "Starting DB build at ".date('Y-m-d H:i:s').PHP_EOL;
         $start = microtime(true);
 
+        $this->buildPostgresTempTables();
+
+        $temps = microtime(true);
+        $diff = $temps - $start;
+        echo "Built postgres temp tables in ".number_format($diff, 3)." seconds".PHP_EOL;
+
+        $this->buildSqliteFile($db);
+
+        $diff = microtime(true) - $temps;
+        echo "Copied data to SQLite in ".number_format($diff, 3)." seconds".PHP_EOL;
+
+        $diff = microtime(true) - $start;
+        echo "Done in ".number_format($diff, 3)." seconds at ".date('Y-m-d H:i:s').PHP_EOL;
+    }
+
+    private function buildPostgresTempTables()
+    {
         $this->xdb->executeUpdate('
             CREATE TEMPORARY TABLE user_weights AS (
                 WITH holdboost_points AS MATERIALIZED (
@@ -233,7 +250,10 @@ class DataUpdater
                 ON user_weights.steam_id = stunt.steam_id
             )
         ');
+    }
 
+    private function buildSqliteFile(Connection $db)
+    {
         $db->transactional(function ($db) {
             $weighted_levels = $this->xdb->executeQuery('
                 SELECT
@@ -317,10 +337,6 @@ class DataUpdater
                 $this->bulkInsert($db, 'weighted_'.$type.'_leaderboard', $weighted_leaderboard);
             }
         });
-
-        $diff = microtime(true) - $start;
-
-        echo "Done in ".number_format($diff, 3)." seconds".PHP_EOL;
     }
 
     private function bulkInsert(Connection $db, string $table, $query)
