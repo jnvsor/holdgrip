@@ -88,9 +88,13 @@ header {
         align-items: center;
         justify-content: space-between;
 
-        nav a {
-            display: inline-block;
-            margin-left: $gutter-width;
+        nav {
+            display: flex;
+            flex-flow: row nowrap;
+
+            a {
+                margin-left: $gutter-width;
+            }
         }
     }
 }
