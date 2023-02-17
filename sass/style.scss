@@ -88,9 +88,9 @@ header {
         align-items: center;
         justify-content: space-between;
 
-        nav {
-            display: flex;
-            flex-flow: column nowrap;
+        nav a {
+            display: inline-block;
+            margin-left: $gutter-width;
         }
     }
 }
