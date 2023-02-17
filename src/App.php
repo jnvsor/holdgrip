@@ -4,6 +4,7 @@ namespace DHB;
 
 use DHB\Controller\PlayerController;
 use DHB\Controller\TrackController;
+use DHB\CacheListener;
 use DHB\DataUpdater;
 use DHB\FileNotFoundListener;
 use Doctrine\DBAL\Configuration as DBALConfig;
@@ -112,6 +113,11 @@ class App
             $dispatcher->addSubscriber($c['router_listener']);
             return $dispatcher;
         });
+        $this->container['404_listener'] = fn($c) => new FileNotFoundListener($c['twig']);
+        $this->container['cache_listener'] = fn($c) => new CacheListener(
+            $c['config']['db_lifetime'],
+            filemtime($c['config']['db']['path'])
+        );
 
         // Controllers
         $this->container['controller.player'] = fn($c) => new PlayerController(
@@ -124,7 +130,6 @@ class App
             $c['twig'],
             $c['config']['lb_types']
         );
-        $this->container['404_listener'] = fn($c) => new FileNotFoundListener($c['twig']);
 
         // Updater
         $this->container['updater'] = fn($c) => new DataUpdater($c['external_db'], $c['config']['lb_types']);
@@ -156,6 +161,7 @@ class App
                 'port' => getenv('DB_PORT') ?: null,
                 'driver' => 'pdo_pgsql',
             ],
+            'db_lifetime' => 'PT30M',
             'lb_types' => [
                 'sprint' => [
                     'name' => 'sprint',
@@ -287,6 +293,7 @@ class App
 
         $this->container['routes'] = $this->getRoutes();
         $this->container['dispatcher']->addSubscriber($this->container['404_listener']);
+        $this->container['dispatcher']->addSubscriber($this->container['cache_listener']);
     }
 
     public function handle(Request $req): Response

@@ -4,3 +4,7 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^ index.php
 
 php_value display_errors off
+
+<FilesMatch "\.(ico|png|css)$">
+    Header set Cache-Control "max-age=2592000, public"
+</FilesMatch>

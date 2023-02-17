@@ -16,6 +16,7 @@ WORKDIR /var/www
 RUN apt-get update && apt-get install -y cron git libpq-dev
 RUN docker-php-ext-install pdo pdo_pgsql
 RUN a2enmod rewrite
+RUN a2enmod headers
 RUN echo "*/30 * * * * /usr/local/bin/php /var/www/cron.php >/proc/1/fd/1 2>/proc/1/fd/2" > /etc/cron.d/dhb_cron
 RUN chmod 0644 /etc/cron.d/dhb_cron
 RUN crontab /etc/cron.d/dhb_cron
@@ -23,7 +24,7 @@ RUN crontab /etc/cron.d/dhb_cron
 COPY ./ /var/www/
 COPY --from=composer /var/www/ ./
 COPY --from=node /var/www/html/style.css ./html/
-RUN chmod -R 0770 /var/www/var
+RUN chmod -R 0700 /var/www/var
 RUN chown -R www-data:www-data /var/www/var
 
 EXPOSE 80
