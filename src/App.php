@@ -2,14 +2,14 @@
 
 namespace HoldGrip;
 
-use HoldGrip\Controller\PlayerController;
-use HoldGrip\Controller\TrackController;
-use HoldGrip\CacheListener;
-use HoldGrip\DataUpdater;
-use HoldGrip\FileNotFoundListener;
 use Doctrine\DBAL\Configuration as DBALConfig;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\DebugStack;
+use HoldGrip\CacheListener;
+use HoldGrip\Controller\PlayerController;
+use HoldGrip\Controller\TrackController;
+use HoldGrip\DataUpdater;
+use HoldGrip\FileNotFoundListener;
 use Kint;
 use Pimple\Container;
 use Symfony\Component\ErrorHandler\Debug;

@@ -1,15 +1,7 @@
 {% extends 'base.twig' %}
 
 {% block content %}
-{% if message %}
-    <h2>{{ message }}</h2>
-{% else %}
-    <h2>404: File not found</h2>
-{% endif %}
+<h2>{{ message | default('File not found') }}</h2>
 
-{% if details %}
-    <p>{{ details }}</p>
-{% else %}
-    <p>It looks like you're lost</p>
-{% endif %}
+<p>It looks like you're lost</p>
 {% endblock %}

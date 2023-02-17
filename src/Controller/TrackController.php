@@ -2,12 +2,12 @@
 
 namespace HoldGrip\Controller;
 
-use HoldGrip\TimeFormatter;
 use Doctrine\DBAL\Connection;
+use HoldGrip\NotFoundException;
+use HoldGrip\TimeFormatter;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Twig\Environment;
 
 class TrackController
@@ -133,7 +133,7 @@ class TrackController
         );
 
         if (!$track) {
-            throw new NotFoundHttpException('Track not found');
+            throw new NotFoundException('Track not found');
         }
 
         $lb = $this->db->fetchAllAssociative('
