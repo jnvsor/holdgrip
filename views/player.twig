@@ -11,7 +11,7 @@
                         {% if player[t.name ~ '_score'] %}
                             <tr>
                                 <th>{{ t.label }} rank</th>
-                                <td>{{ player[t.name ~ '_rank'] }}</td>
+                                <td>{{ player[t.name ~ '_rank'] | number_format }}</td>
                             </tr>
                         {% endif %}
                         <tr>
