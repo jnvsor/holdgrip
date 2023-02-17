@@ -24,9 +24,10 @@ class CacheListener implements EventSubscriberInterface
     {
         $res = $event->getResponse();
 
-        $res->setLastModified($this->mtime);
         $end_timestamp = $this->mtime->add($this->interval)->getTimestamp();
-        $res->setMaxAge(max(60, $end_timestamp - time()));
+        $res->setMaxAge(max(60, $end_timestamp - time()))
+            ->setLastModified($this->mtime)
+            ->setPublic();
     }
 
     public static function getSubscribedEvents()
