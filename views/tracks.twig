@@ -5,15 +5,19 @@
 <main>
     <table class="stats">
         <tr>
-            <th class="tw15">Rank</th>
+            <th class="tw5">Rank</th>
             <th>Track</th>
-            <th class="tw15">Completed</th>
-            <th class="tw15">Track weight</th>
+            <th class="tw20" colspan="2"><a href="/tracks/{{ type.name }}/popular">Popularity</a></th>
+            <th class="tw10"><a href="/tracks/{{ type.name }}/completed">Completed</a></th>
+            <th class="tw10"><a href="/tracks/{{ type.name }}/weight">Track weight</a></th>
         </tr>
+
         {% for track in tracks -%}
             <tr>
                 <td>{% if track.rank is not null %}{{ track.rank | number_format }}{% endif %}</td>
                 <td class="text"><a href="/tracks/{{ type.name }}/{{ track.id }}">{{ track.name }}</a></td>
+                <td class="text"><img src="/voteup.png" alt="Upvotes:"> {{ track.votes_up | number_format }}</td>
+                <td class="text"><img src="/votedown.png" alt="Downvotes:"> {{ track.votes_down | number_format }}</td>
                 <td>{{ track.finished_count | number_format }}</td>
                 <td>{% if track.track_weight is not null %}{{ track.track_weight | number_format }}{% endif %}</td>
             </tr>

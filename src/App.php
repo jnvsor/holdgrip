@@ -117,7 +117,11 @@ class App
         $this->container->extend('dispatcher', function ($dispatcher, $c) {
             $dispatcher->addSubscriber($c['router_listener']);
             $dispatcher->addSubscriber($c['404_listener']);
-            $dispatcher->addSubscriber($c['cache_listener']);
+
+            if (!$c['config']['debug']) {
+                $dispatcher->addSubscriber($c['cache_listener']);
+            }
+
             return $dispatcher;
         });
 
@@ -224,33 +228,27 @@ class App
                 ],
             ],
             'tracks' => [
-                'url' => '/tracks/{type}',
+                'url' => '/tracks/{type}/{ranking}',
                 'defaults' => [
                     '_controller' => 'controller.track::list',
-                    'type' => $defaultType,
                 ],
                 'requirements' => [
                     'type' => $typereq,
-                ],
-            ],
-            'popular_tracks' => [
-                'url' => '/tracks/{type}/popular',
-                'defaults' => [
-                    '_controller' => 'controller.track::popular',
-                    'type' => $defaultType,
-                ],
-                'requirements' => [
-                    'type' => $typereq,
+                    'ranking' => implode('|', [
+                        TrackController::RANK_WEIGHT,
+                        TrackController::RANK_COMPLETED,
+                        TrackController::RANK_POPULAR,
+                    ]),
                 ],
             ],
             'track' => [
                 'url' => '/tracks/{type}/{id}',
                 'defaults' => [
                     '_controller' => 'controller.track::show',
-                    'type' => $defaultType,
                 ],
                 'requirements' => [
                     'type' => $typereq,
+                    'id' => '\\d+',
                 ],
             ],
             'index' => [

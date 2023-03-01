@@ -92,8 +92,10 @@ header {
             display: flex;
             flex-flow: row nowrap;
 
-            a {
+            > div {
                 margin-left: $gutter-width;
+                display: flex;
+                flex-flow: column nowrap;
             }
         }
     }
@@ -143,11 +145,17 @@ table.stats {
         text-align: left;
         white-space: nowrap;
 
+        &.tw5 {
+            width: 5%;
+        }
         &.tw10 {
             width: 10%;
         }
         &.tw15 {
             width: 15%;
+        }
+        &.tw20 {
+            width: 20%;
         }
         &.tw25 {
             width: 25%;

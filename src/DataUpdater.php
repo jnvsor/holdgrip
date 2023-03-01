@@ -123,19 +123,35 @@ class DataUpdater
         $this->xdb->executeUpdate('
             CREATE TEMPORARY TABLE weighted_levels AS (
                 WITH latestFiles AS (
-                    SELECT author_steam_id, file_name, MAX(time_created) as t
+                    SELECT
+                        author_steam_id,
+                        file_name,
+                        MAX(time_created) as created_latest,
+                        MIN(time_created) AS time_created,
+                        SUM(votes_up) AS votes_up,
+                        SUM(votes_down) AS votes_down
                     FROM workshop_level_details
                     GROUP BY author_steam_id, file_name
                 ),
-                validIds AS (
-                    SELECT level_id
-                    FROM workshop_level_details
-                    WHERE (author_steam_id, file_name, time_created) IN(SELECT * FROM latestFiles)
+                validLevels AS (
+                    SELECT wld.level_id, lf.time_created, lf.votes_up, lf.votes_down
+                    FROM workshop_level_details AS wld
+                    INNER JOIN latestFiles AS lf
+                    ON lf.author_steam_id = wld.author_steam_id
+                    AND lf.file_name = wld.file_name
+                    AND lf.created_latest = wld.time_created
                 )
 
                 SELECT
                     workshop_levels.id,
                     workshop_levels.name,
+                    validLevels.time_created,
+                    validLevels.votes_up,
+                    validLevels.votes_down,
+                    CASE WHEN validLevels.votes_up + validLevels.votes_down > 0
+                        THEN (validLevels.votes_up - validLevels.votes_down) / CAST(POWER(validLevels.votes_up + validLevels.votes_down, 0.98) AS real)
+                        ELSE 0
+                    END AS popularity,
                     workshop_levels.is_sprint,
                     workshop_levels.is_challenge,
                     workshop_levels.is_stunt,
@@ -146,13 +162,14 @@ class DataUpdater
                     stunt_stats.finished_count AS stunt_finished_count,
                     stunt_stats.track_weight AS stunt_track_weight
                 FROM workshop_levels
+                INNER JOIN validLevels
+                ON validLevels.level_id = workshop_levels.id
                 LEFT JOIN sprint_stats
                 ON sprint_stats.id = workshop_levels.id
                 LEFT JOIN challenge_stats
                 ON challenge_stats.id = workshop_levels.id
                 LEFT JOIN stunt_stats
                 ON stunt_stats.id = workshop_levels.id
-                WHERE workshop_levels.id IN(SELECT * FROM validIds)
             )
         ');
 
@@ -259,6 +276,10 @@ class DataUpdater
                 SELECT
                     id,
                     name,
+                    time_created,
+                    votes_up,
+                    votes_down,
+                    popularity,
                     CAST(is_sprint AS integer) AS is_sprint,
                     CAST(is_challenge AS integer) AS is_challenge,
                     CAST(is_stunt AS integer) AS is_stunt,
@@ -276,6 +297,10 @@ class DataUpdater
                 CREATE TABLE workshop_levels (
                     id integer NOT NULL PRIMARY KEY,
                     name text NOT NULL,
+                    time_created text NOT NULL,
+                    votes_up integer NOT NULL,
+                    votes_down integer NOT NULL,
+                    popularity real NOT NULL,
                     is_sprint integer NOT NULL,
                     is_challenge integer NOT NULL,
                     is_stunt integer NOT NULL,

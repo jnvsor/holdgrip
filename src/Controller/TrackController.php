@@ -12,6 +12,10 @@ use Twig\Environment;
 
 class TrackController
 {
+    const RANK_WEIGHT = 'weight';
+    const RANK_COMPLETED = 'completed';
+    const RANK_POPULAR = 'popular';
+
     private $db;
     private $twig;
     private $lb_types;
@@ -23,69 +27,60 @@ class TrackController
         $this->lb_types = $lb_types;
     }
 
-    public function list(Request $req, string $type): Response
+    public function list(Request $req, string $type, string $ranking): Response
     {
+        $typelabel = $this->lb_types[$type]['label'];
+
+        [$rank_field, $title] = match ($ranking) {
+            self::RANK_WEIGHT => ['track_weight', $typelabel.' tracks by weight'],
+            self::RANK_COMPLETED => ['finished_count', $typelabel.' tracks by completions'],
+            self::RANK_POPULAR => ['popularity', $typelabel.' tracks by popularity'],
+            default => throw new InvalidArgumentException(),
+        };
+
         $tracks = $this->db->fetchAllAssociative('
             WITH levels AS (
                 SELECT
                     id,
                     name,
+                    votes_up,
+                    votes_down,
+                    popularity,
                     '.$type.'_finished_count AS finished_count,
                     '.$type.'_track_weight AS track_weight
                 FROM workshop_levels
                 WHERE is_'.$type.'
-            )
-
-            SELECT
-                CASE WHEN track_weight
-                    THEN RANK() OVER (ORDER BY track_weight DESC)
-                    ELSE NULL
-                END AS rank,
-                id,
-                name,
-                finished_count,
-                ROUND(1000.0 * track_weight) AS track_weight
-            FROM levels
-            ORDER BY track_weight DESC
-        ');
-
-        $out = $this->twig->render('tracks.twig', [
-            'title' => $this->lb_types[$type]['label'].' tracks',
-            'tracks' => $tracks,
-            'type' => $this->lb_types[$type],
-        ]);
-
-        return new Response($out);
-    }
-
-    public function popular(Request $req, string $type): Response
-    {
-        $tracks = $this->db->fetchAllAssociative('
-            WITH levels AS (
+            ),
+            rankedLevels AS (
                 SELECT
                     id,
                     name,
-                    '.$type.'_finished_count AS finished_count,
-                    '.$type.'_track_weight AS track_weight
-                FROM workshop_levels
-                WHERE is_'.$type.'
+                    votes_up,
+                    votes_down,
+                    popularity,
+                    finished_count,
+                    track_weight,
+                    '.$rank_field.' AS rank_field
+                FROM levels
             )
 
             SELECT
-                CASE WHEN finished_count
-                    THEN RANK() OVER (ORDER BY finished_count DESC)
+                CASE WHEN rank_field
+                    THEN RANK() OVER (ORDER BY rank_field DESC)
                     ELSE NULL
                 END AS rank,
                 id,
                 name,
+                votes_up,
+                votes_down,
                 finished_count,
                 ROUND(1000.0 * track_weight) AS track_weight
-            FROM levels
-            ORDER BY finished_count DESC
+            FROM rankedLevels
+            ORDER BY rank_field DESC
         ');
 
         $out = $this->twig->render('tracks.twig', [
-            'title' => 'Popular '.strtolower($this->lb_types[$type]['label']).' tracks',
+            'title' => $title,
             'tracks' => $tracks,
             'type' => $this->lb_types[$type],
         ]);
@@ -100,6 +95,10 @@ class TrackController
                     SELECT
                         id,
                         name,
+                        time_created,
+                        votes_up,
+                        votes_down,
+                        popularity,
                         is_sprint,
                         is_challenge,
                         is_stunt,
@@ -115,13 +114,19 @@ class TrackController
                         ) weight_rank,
                         RANK() OVER (
                             ORDER BY finished_count DESC
+                        ) finished_rank,
+                        RANK() OVER (
+                            ORDER BY popularity DESC
                         ) popular_rank,
                         id,
                         name,
+                        time_created,
+                        votes_up,
+                        votes_down,
                         is_sprint,
                         is_challenge,
                         is_stunt,
-                        finished_count AS finished_count,
+                        finished_count,
                         ROUND(1000.0 * track_weight) AS track_weight
                     FROM levels
                 )
