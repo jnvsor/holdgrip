@@ -3,6 +3,7 @@
 {% block content %}
 <h2>{{ player.name }} stats</h2>
 <main>
+    <p class="profilelink"><a target="_blank" href="https://steamcommunity.com/profiles/{{ player.steam_id }}"><img class="steamlogo" src="/steam.png">Steam profile</a></p>
     <div class="playerstats">
         <div class="row">
             {% for t in types %}
