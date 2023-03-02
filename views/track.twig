@@ -29,24 +29,24 @@
                     <th>Popularity rank</th>
                     <td>{{ track.popular_rank | number_format }}</td>
                 </tr>
-                <tr>
-                    <th>Completions</th>
-                    <td>{{ track.finished_count | number_format }}</td>
-                </tr>
                 {% if track.finished_count %}
                     <tr>
                         <th>Completions rank</th>
                         <td>{{ track.finished_rank | number_format }}</td>
                     </tr>
                 {% endif %}
+                <tr>
+                    <th>Completions</th>
+                    <td>{{ track.finished_count | number_format }}</td>
+                </tr>
                 {% if track.track_weight is not null %}
-                    <tr>
-                        <th>Weight</th>
-                        <td>{{ track.track_weight | number_format }}</td>
-                    </tr>
                     <tr>
                         <th>Weight rank</th>
                         <td>{{ track.weight_rank | number_format }}</td>
+                    </tr>
+                    <tr>
+                        <th>Weight</th>
+                        <td>{{ track.track_weight | number_format }}</td>
                     </tr>
                 {% endif %}
             </table>
