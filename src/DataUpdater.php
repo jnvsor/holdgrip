@@ -48,7 +48,6 @@ class DataUpdater
 
                 SELECT
                     users.steam_id,
-                    users.name,
                     SUM(COALESCE(points.noodle_points, 0)) AS weight
                 FROM users
                 INNER JOIN sprint_leaderboard_entries
@@ -225,14 +224,14 @@ class DataUpdater
                     )
 
                     SELECT
-                        user_weights.steam_id,
+                        users.steam_id,
                         COUNT(level_id) AS count,
                         SUM(
                             COALESCE(workshop_score_weighted, 0) * (
                                 1.0 - (CAST(total_tracks_weight - POWER(total_tracks - row_number, 2) AS real) / total_tracks_weight)
                             )
                         ) AS score
-                    FROM user_weights
+                    FROM users
                     CROSS JOIN (
                         SELECT
                             COUNT(*) AS total_tracks,
@@ -240,8 +239,8 @@ class DataUpdater
                         FROM levels
                     ) AS diminishing_returns
                     INNER JOIN lb
-                    ON lb.steam_id = user_weights.steam_id
-                    GROUP BY user_weights.steam_id
+                    ON lb.steam_id = users.steam_id
+                    GROUP BY users.steam_id
                 )
             ');
         }
@@ -249,8 +248,8 @@ class DataUpdater
         $this->xdb->executeUpdate('
             CREATE TEMPORARY TABLE user_scores AS (
                 SELECT
-                    user_weights.steam_id,
-                    user_weights.name,
+                    users.steam_id,
+                    users.name,
                     user_weights.weight AS holdboost_score,
                     COALESCE(sprint.count, 0) AS sprint_count,
                     COALESCE(sprint.score, 0) AS sprint_score,
@@ -258,13 +257,15 @@ class DataUpdater
                     COALESCE(challenge.score, 0) AS challenge_score,
                     COALESCE(stunt.count, 0) AS stunt_count,
                     COALESCE(stunt.score, 0) AS stunt_score
-                FROM user_weights
+                FROM users
+                LEFT JOIN user_weights
+                ON users.steam_id = user_weights.steam_id
                 LEFT JOIN sprint_scores AS sprint
-                ON user_weights.steam_id = sprint.steam_id
+                ON users.steam_id = sprint.steam_id
                 LEFT JOIN challenge_scores AS challenge
-                ON user_weights.steam_id = challenge.steam_id
+                ON users.steam_id = challenge.steam_id
                 LEFT JOIN stunt_scores AS stunt
-                ON user_weights.steam_id = stunt.steam_id
+                ON users.steam_id = stunt.steam_id
             )
         ');
     }
@@ -322,7 +323,7 @@ class DataUpdater
                 CREATE TABLE IF NOT EXISTS users (
                     steam_id integer NOT NULL PRIMARY KEY,
                     name text NOT NULL,
-                    holdboost_score integer NOT NULL,
+                    holdboost_score integer NULL,
                     sprint_count integer NOT NULL,
                     sprint_score real NOT NULL,
                     challenge_count integer NOT NULL,

@@ -25,7 +25,7 @@
                                 <td>{{ player[t.name ~ '_score'] | number_format }}</td>
                             </tr>
                         {% endif %}
-                        {% if t.name == 'sprint' %}
+                        {% if t.name == 'sprint' and player.holdboost_score is not null %}
                             <tr>
                                 <th>Holdboost</th>
                                 <td><a href="http://holdboost.com/Player?steamID={{ player.steam_id }}" target="_blank">{{ player.holdboost_score | number_format }}</a></td>

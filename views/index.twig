@@ -72,7 +72,11 @@
                     <tr>
                         <td>{{ row.rank | number_format }}</td>
                         <td class="text"><a href="/player/{{ row.steam_id }}/{{ type.name }}">{{ row.name }}</a></td>
-                        <td><a href="http://holdboost.com/Player?steamID={{ row.steam_id }}" target="_blank">{{ row.holdboost_score | number_format }}</a></td>
+                        <td>
+                            {%- if row.holdboost_score is not null -%}
+                                <a href="http://holdboost.com/Player?steamID={{ row.steam_id }}" target="_blank">{{ row.holdboost_score | number_format }}</a>
+                            {%- endif -%}
+                        </td>
                         <td>{{ row.count | number_format }}</td>
                         <td>{{ row.score | number_format }}</td>
                     </tr>
