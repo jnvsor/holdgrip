@@ -4,7 +4,6 @@ namespace HoldGrip\Controller;
 
 use Doctrine\DBAL\Connection;
 use HoldGrip\NotFoundException;
-use HoldGrip\TimeFormatter;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -147,13 +146,17 @@ class PlayerController
                         ) AS challenge,
                         RANK() OVER (
                             ORDER BY stunt_score DESC
-                        ) AS stunt
+                        ) AS stunt,
+                        RANK() OVER (
+                            ORDER BY holdboost_score DESC
+                        ) AS holdboost
                     FROM users
                 )
 
                 SELECT
                     users.steam_id,
                     name,
+                    rank.holdboost AS holdboost_rank,
                     holdboost_score,
                     rank.sprint AS sprint_rank,
                     sprint_count,
@@ -212,16 +215,6 @@ class PlayerController
             ',
             [$id]
         );
-
-        if ($this->lb_types[$type]['score_field'] === 'time') {
-            foreach ($tracks as $index => $track) {
-                $tracks[$index]['scorefield'] = TimeFormatter::format($track['scorefield']);
-            }
-        } else {
-            foreach ($tracks as $index => $track) {
-                $tracks[$index]['scorefield'] = number_format($track['scorefield']);
-            }
-        }
 
         $out = $this->twig->render('player.twig', [
             'title' => $player['name'].' stats',

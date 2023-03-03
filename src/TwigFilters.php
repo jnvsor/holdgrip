@@ -2,9 +2,9 @@
 
 namespace HoldGrip;
 
-final class TimeFormatter
+final class TwigFilters
 {
-    public static function format(int $time): string
+    public static function time(int $time): string
     {
         $tstring = '0';
         if ($time >= 1000) {
@@ -19,5 +19,17 @@ final class TimeFormatter
         }
 
         return $tstring;
+    }
+
+    public static function place(int $place)
+    {
+        $suffix = match ($place % 10) {
+            1 => 'st',
+            2 => 'nd',
+            3 => 'rd',
+            default => 'th',
+        };
+
+        return number_format($place).$suffix;
     }
 }

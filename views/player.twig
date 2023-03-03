@@ -12,7 +12,7 @@
                         {% if player[t.name ~ '_score'] %}
                             <tr>
                                 <th>{{ t.label }} rank</th>
-                                <td>{{ player[t.name ~ '_rank'] | number_format }}</td>
+                                <td>{{ player[t.name ~ '_rank'] | int_place }}</td>
                             </tr>
                         {% endif %}
                         <tr>
@@ -26,8 +26,14 @@
                             </tr>
                         {% endif %}
                         {% if t.name == 'sprint' and player.holdboost_score is not null %}
+                            {% if player.holdboost_score %}
+                                <tr>
+                                    <th>Holdboost rank</th>
+                                    <td>{{ player.holdboost_rank | int_place }}</td>
+                                </tr>
+                            {% endif %}
                             <tr>
-                                <th>Holdboost</th>
+                                <th>Holdboost score</th>
                                 <td><a href="http://holdboost.com/Player?steamID={{ player.steam_id }}" target="_blank">{{ player.holdboost_score | number_format }}</a></td>
                             </tr>
                         {% endif %}
@@ -59,7 +65,13 @@
                 <td class="text"><a href="/tracks/{{ type.name }}/{{ track.id }}">{{ track.name }}</a></td>
                 <td>{{ track.track_weight | number_format }}</td>
                 <td>{{ track.rank | number_format }}</td>
-                <td>{{ track.scorefield }}</td>
+                <td>
+                    {%- if type.score_field == 'time' -%}
+                        {{ track.scorefield | int_time }}
+                    {%- else -%}
+                        {{ track.scorefield | number_format }}
+                    {%- endif -%}
+                </td>
                 <td>{{ track.workshop_score | number_format }}</td>
                 <td>{{ track.workshop_score_weighted | number_format }}</td>
             </tr>

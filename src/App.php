@@ -5,11 +5,8 @@ namespace HoldGrip;
 use Doctrine\DBAL\Configuration as DBALConfig;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\DebugStack;
-use HoldGrip\CacheListener;
 use HoldGrip\Controller\PlayerController;
 use HoldGrip\Controller\TrackController;
-use HoldGrip\DataUpdater;
-use HoldGrip\FileNotFoundListener;
 use Kint;
 use Pimple\Container;
 use Symfony\Component\ErrorHandler\Debug;
@@ -25,6 +22,7 @@ use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 use Twig\Environment;
+use Twig\TwigFilter;
 use Twig\Loader\FilesystemLoader;
 
 class App
@@ -71,6 +69,8 @@ class App
             );
 
             $twig->addGlobal('stylehash', hash_file('md5', dirname(__DIR__).'/html/style.css'));
+            $twig->addFilter(new TwigFilter('int_time', TwigFilters::time(...), ['is_safe' => ['html']]));
+            $twig->addFilter(new TwigFilter('int_place', TwigFilters::place(...), ['is_safe' => ['html']]));
 
             return $twig;
         };

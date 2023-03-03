@@ -169,16 +169,6 @@ class TrackController
             [$id]
         );
 
-        if ($this->lb_types[$type]['score_field'] === 'time') {
-            foreach ($lb as $index => $row) {
-                $lb[$index]['scorefield'] = TimeFormatter::format($row['scorefield']);
-            }
-        } else {
-            foreach ($lb as $index => $row) {
-                $lb[$index]['scorefield'] = number_format($row['scorefield']);
-            }
-        }
-
         $out = $this->twig->render('track.twig', [
             'title' => $this->lb_types[$type]['label'].' track '.$track['name'],
             'track' => $track,

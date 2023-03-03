@@ -27,12 +27,12 @@
                 </tr>
                 <tr>
                     <th>Popularity rank</th>
-                    <td>{{ track.popular_rank | number_format }}</td>
+                    <td>{{ track.popular_rank | int_place }}</td>
                 </tr>
                 {% if track.finished_count %}
                     <tr>
                         <th>Completions rank</th>
-                        <td>{{ track.finished_rank | number_format }}</td>
+                        <td>{{ track.finished_rank | int_place }}</td>
                     </tr>
                 {% endif %}
                 <tr>
@@ -42,7 +42,7 @@
                 {% if track.track_weight is not null %}
                     <tr>
                         <th>Weight rank</th>
-                        <td>{{ track.weight_rank | number_format }}</td>
+                        <td>{{ track.weight_rank | int_place }}</td>
                     </tr>
                     <tr>
                         <th>Weight</th>
@@ -64,7 +64,13 @@
                 <tr>
                     <td>{{ row.rank | number_format }}</td>
                     <td class="text"><a href="/player/{{ row.steam_id }}/{{ type.name }}">{{ row.name }}</a></td>
-                    <td>{{ row.scorefield }}</td>
+                    <td>
+                        {%- if type.score_field == 'time' -%}
+                            {{ row.scorefield | int_time }}
+                        {%- else -%}
+                            {{ row.scorefield | number_format }}
+                        {%- endif -%}
+                    </td>
                     <td>{{ row.workshop_score | number_format }}</td>
                     <td>{{ row.workshop_score_weighted | number_format }}</td>
                 </tr>
