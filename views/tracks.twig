@@ -7,9 +7,27 @@
         <tr>
             <th class="tw5">Rank</th>
             <th>Track</th>
-            <th class="tw20" colspan="2"><a href="/tracks/{{ type.name }}/popular">Popularity</a></th>
-            <th class="tw10"><a href="/tracks/{{ type.name }}/completed">Completed</a></th>
-            <th class="tw10"><a href="/tracks/{{ type.name }}/weight">Track weight</a></th>
+            <th class="tw20" colspan="2">
+                {%- if ranking == 'popular' -%}
+                    Popularity &dtrif;
+                {%- else -%}
+                    <a href="/tracks/{{ type.name }}/popular">Popularity</a>
+                {%- endif -%}
+            </th>
+            <th class="tw10">
+                {%- if ranking == 'completed' -%}
+                    Completed &dtrif;
+                {%- else -%}
+                    <a href="/tracks/{{ type.name }}/completed">Completed</a>
+                {%- endif -%}
+            </th>
+            <th class="tw10">
+                {%- if ranking == 'weight' -%}
+                    Track weight &dtrif;
+                {%- else -%}
+                    <a href="/tracks/{{ type.name }}/weight">Track weight</a>
+                {%- endif -%}
+            </th>
         </tr>
 
         {% for track in tracks -%}

@@ -3,6 +3,7 @@
 $gutter-width: 30px;
 $color: #c8c8c8;
 $background: #222;
+$tablebg: #212529;
 
 html,
 body {
@@ -124,7 +125,7 @@ table.stats {
     table-layout: fixed;
     width: 100%;
     border-collapse: collapse;
-    background: #212529;
+    background: $tablebg;
     margin-bottom: $gutter-width;
 
     &.small {
@@ -133,12 +134,12 @@ table.stats {
     }
 
     tr:nth-child(2n) {
-        background: rgba(#FFF, 0.05);
+        background: lighten($tablebg, 5%);
     }
 
     td, th {
         padding: ($gutter-width / 4) ($gutter-width / 2);
-        border-bottom: 1px solid #32383e;
+        border-bottom: 1px solid lighten($tablebg, 7.5%);
     }
 
     th {

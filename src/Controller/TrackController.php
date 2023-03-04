@@ -81,6 +81,7 @@ class TrackController
 
         $out = $this->twig->render('tracks.twig', [
             'title' => $title,
+            'ranking' => $ranking,
             'tracks' => $tracks,
             'type' => $this->lb_types[$type],
         ]);
