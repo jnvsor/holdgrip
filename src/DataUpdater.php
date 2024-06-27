@@ -37,7 +37,7 @@ class DataUpdater
 
     private function buildPostgresTempTables()
     {
-        $this->xdb->executeUpdate('
+        $this->xdb->executeStatement('
             CREATE TEMPORARY TABLE user_weights AS (
                 WITH holdboost_points AS MATERIALIZED (
                     SELECT
@@ -66,7 +66,7 @@ class DataUpdater
         ');
 
         foreach ($this->lb_types as $type => $opts) {
-            $this->xdb->executeUpdate('
+            $this->xdb->executeStatement('
                     CREATE TEMPORARY TABLE '.$type.'_stats AS (
                         WITH lb AS NOT MATERIALIZED (
                             SELECT * FROM '.$type.'_leaderboard_entries
@@ -125,7 +125,7 @@ class DataUpdater
             );
         }
 
-        $this->xdb->executeUpdate('
+        $this->xdb->executeStatement('
             CREATE TEMPORARY TABLE weighted_levels AS (
                 WITH latestFiles AS (
                     SELECT
@@ -178,7 +178,7 @@ class DataUpdater
             )
         ');
 
-        $this->xdb->executeUpdate('
+        $this->xdb->executeStatement('
             CREATE TEMPORARY TABLE workshop_points AS (
                 SELECT
                     rank,
@@ -188,7 +188,7 @@ class DataUpdater
         ');
 
         foreach ($this->lb_types as $type => $opts) {
-            $this->xdb->executeUpdate('
+            $this->xdb->executeStatement('
                 CREATE TEMPORARY TABLE weighted_'.$type.'_leaderboard AS (
                     WITH lb AS NOT MATERIALIZED (
                         SELECT * FROM '.$type.'_leaderboard_entries
@@ -218,7 +218,7 @@ class DataUpdater
                 )
             ');
 
-            $this->xdb->executeUpdate('
+            $this->xdb->executeStatement('
                 CREATE TEMPORARY TABLE '.$type.'_scores AS (
                     WITH lb AS NOT MATERIALIZED (
                         SELECT * FROM weighted_'.$type.'_leaderboard
@@ -251,7 +251,7 @@ class DataUpdater
             ');
         }
 
-        $this->xdb->executeUpdate('
+        $this->xdb->executeStatement('
             CREATE TEMPORARY TABLE user_scores AS (
                 SELECT
                     users.steam_id,
@@ -298,9 +298,9 @@ class DataUpdater
                     stunt_track_weight
                 FROM weighted_levels
             ');
-            $db->executeUpdate('DROP TABLE IF EXISTS workshop_levels');
+            $db->executeStatement('DROP TABLE IF EXISTS workshop_levels');
             // *_finished_count fields are cached here for performance purposes
-            $db->executeUpdate('
+            $db->executeStatement('
                 CREATE TABLE workshop_levels (
                     id integer NOT NULL PRIMARY KEY,
                     name text NOT NULL,
@@ -323,9 +323,9 @@ class DataUpdater
             $this->bulkInsert($db, 'workshop_levels', $weighted_levels);
 
             $user_scores = $this->xdb->executeQuery('SELECT * FROM user_scores');
-            $db->executeUpdate('DROP TABLE IF EXISTS users');
+            $db->executeStatement('DROP TABLE IF EXISTS users');
             // *_count fields are cached here for performance purposes
-            $db->executeUpdate('
+            $db->executeStatement('
                 CREATE TABLE IF NOT EXISTS users (
                     steam_id integer NOT NULL PRIMARY KEY,
                     name text NOT NULL,
@@ -346,8 +346,8 @@ class DataUpdater
                     FROM weighted_'.$type.'_leaderboard'
                 );
 
-                $db->executeUpdate('DROP TABLE IF EXISTS weighted_'.$type.'_leaderboard');
-                $db->executeUpdate('
+                $db->executeStatement('DROP TABLE IF EXISTS weighted_'.$type.'_leaderboard');
+                $db->executeStatement('
                     CREATE TABLE IF NOT EXISTS weighted_'.$type.'_leaderboard (
                         level_id integer NOT NULL,
                         steam_id integer NOT NULL,
@@ -358,11 +358,11 @@ class DataUpdater
                         PRIMARY KEY(level_id, steam_id)
                     ) WITHOUT ROWID
                 ');
-                $db->executeUpdate('
+                $db->executeStatement('
                     CREATE INDEX weighted_'.$type.'_leaderboard_level_id
                     ON weighted_'.$type.'_leaderboard (level_id)
                 ');
-                $db->executeUpdate('
+                $db->executeStatement('
                     CREATE INDEX weighted_'.$type.'_leaderboard_steam_id
                     ON weighted_'.$type.'_leaderboard (steam_id)
                 ');
@@ -373,35 +373,27 @@ class DataUpdater
 
     private function bulkInsert(Connection $db, string $table, $query)
     {
-        try {
-            $config = $db->getConfiguration();
-            $logger = $config->getSQLLogger();
-            $config->setSQLLogger();
+        $preamble = 'INSERT INTO '.$table.' VALUES';
+        $row_placeholders = '('.implode(',', array_fill(0, $query->columnCount(), '?')).')';
+        $batch = [];
 
-            $preamble = 'INSERT INTO '.$table.' VALUES';
-            $row_placeholders = '('.implode(',', array_fill(0, $query->columnCount(), '?')).')';
-            $batch = [];
+        do {
+            $row = $query->fetchNumeric();
 
-            do {
-                $row = $query->fetchNumeric();
+            if ($row) {
+                $batch[] = $row;
+            }
 
-                if ($row) {
-                    $batch[] = $row;
-                }
+            if ($batch && (!$row || count($batch) >= 1000)) {
+                $placeholders = implode(', ', array_fill(0, count($batch), $row_placeholders));
 
-                if ($batch && (!$row || count($batch) >= 1000)) {
-                    $placeholders = implode(', ', array_fill(0, count($batch), $row_placeholders));
+                $db->executeStatement(
+                    $preamble.$placeholders,
+                    array_merge(...$batch)
+                );
 
-                    $db->executeUpdate(
-                        $preamble.$placeholders,
-                        array_merge(...$batch)
-                    );
-
-                    $batch = [];
-                }
-            } while ($row);
-        } finally {
-            $config->setSQLLogger($logger);
-        }
+                $batch = [];
+            }
+        } while ($row);
     }
 }

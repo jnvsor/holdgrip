@@ -1,4 +1,4 @@
-@import 'node_modules/normalize.css/normalize';
+@import 'node_modules/normalize.css/normalize.css';
 
 $gutter-width: 30px;
 $color: #c8c8c8;
@@ -30,7 +30,7 @@ a:hover {
 }
 
 a.button {
-    padding: ($gutter-width / 4);
+    padding: calc($gutter-width / 4);
     border: 1px solid $color;
     border-radius: 5px;
     cursor: pointer;
@@ -50,7 +50,7 @@ a.button {
 }
 
 h1 {
-    margin: ($gutter-width / 2) 0;
+    margin: calc($gutter-width / 2) 0;
 }
 
 #site-title {
@@ -103,7 +103,7 @@ header {
 }
 
 main nav {
-    margin-bottom: ($gutter-width / 2);
+    margin-bottom: calc($gutter-width / 2);
 }
 
 main .sidebar {
@@ -138,7 +138,7 @@ table.stats {
     }
 
     td, th {
-        padding: ($gutter-width / 4) ($gutter-width / 2);
+        padding: calc($gutter-width / 4) calc($gutter-width / 2);
         border-bottom: 1px solid lighten($tablebg, 7.5%);
     }
 
@@ -190,7 +190,7 @@ table.stats {
 }
 
 .playerstats {
-    margin: 0 (-($gutter-width / 2)) $gutter-width;
+    margin: 0 (calc($gutter-width / 2 * -1)) $gutter-width;
 
     > .row {
         display: flex;
@@ -199,7 +199,7 @@ table.stats {
 
         > div {
             flex: 1 0 0;
-            padding: 0 ($gutter-width / 2);
+            padding: 0 calc($gutter-width / 2);
         }
     }
 
@@ -211,5 +211,5 @@ table.stats {
 
 footer {
     text-align: center;
-    padding: ($gutter-width / 2) 0;
+    padding: calc($gutter-width / 2) 0;
 }

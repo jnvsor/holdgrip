@@ -2,9 +2,7 @@
 
 namespace HoldGrip;
 
-use Doctrine\DBAL\Configuration as DBALConfig;
 use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Logging\DebugStack;
 use HoldGrip\Controller\PlayerController;
 use HoldGrip\Controller\TrackController;
 use Kint;
@@ -35,28 +33,9 @@ class App
         $this->container = new Container();
 
         // Databases
-        $this->container['sql_logger'] = function ($c) {
-            $logger = new DebugStack();
-            $logger->enabled = $c['config']['debug'];
-            return $logger;
-        };
-        $this->container['dbal_config'] = function ($c) {
-            $conf = new DBALConfig();
-            $conf->setSqlLogger($c['sql_logger']);
-            return $conf;
-        };
-        $this->container['db'] = fn($c) => DriverManager::getConnection(
-            $c['config']['db'],
-            $c['dbal_config']
-        );
-        $this->container['flip_db'] = fn($c) => DriverManager::getConnection(
-            $c['config']['flip_db'],
-            $c['dbal_config']
-        );
-        $this->container['external_db'] = fn($c) => DriverManager::getConnection(
-            $c['config']['external_db'],
-            $c['dbal_config']
-        );
+        $this->container['db'] = fn($c) => DriverManager::getConnection($c['config']['db']);
+        $this->container['flip_db'] = fn($c) => DriverManager::getConnection($c['config']['flip_db']);
+        $this->container['external_db'] = fn($c) => DriverManager::getConnection($c['config']['external_db']);
 
         // Twig
         $this->container['twig'] = function ($c) {

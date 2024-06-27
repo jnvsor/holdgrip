@@ -10,7 +10,7 @@ COPY ./composer.json ./composer.lock /var/www/
 COPY ./src /var/www/src
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-FROM php:8.2-apache
+FROM php:8.3-apache
 WORKDIR /var/www
 
 RUN apt-get update && apt-get install -y cron git libpq-dev
