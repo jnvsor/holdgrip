@@ -7,6 +7,7 @@ use HoldGrip\Controller\PlayerController;
 use HoldGrip\Controller\TrackController;
 use Kint;
 use Pimple\Container;
+use SensitiveParameter;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
@@ -185,7 +186,7 @@ class App
         ];
     }
 
-    public function getRoutes(array $config)
+    public function getRoutes(#[SensitiveParameter] array $config)
     {
         $defaultType = $config['default_lb_type'];
         $typereq = [];
