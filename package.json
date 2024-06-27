@@ -5,6 +5,6 @@
         "normalize.css": "^8"
     },
     "scripts": {
-        "build": "sass -s compressed sass/:html/"
+        "build": "sass -s compressed --no-source-map sass/:html/"
     }
 }
