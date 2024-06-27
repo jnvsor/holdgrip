@@ -101,6 +101,7 @@ class App
             }
             return $routes;
         };
+        $this->container['routes'] = fn($c) => $this->getRoutes($c['config']);
         $this->container['router_listener'] = fn($c) => new RouterListener(
             $c['url_matcher'],
             $c['request_stack'],
@@ -205,13 +206,11 @@ class App
         ];
     }
 
-    public function getRoutes()
+    public function getRoutes(array $config)
     {
-        $conf = $this->container['config'];
-
-        $defaultType = $conf['default_lb_type'];
+        $defaultType = $config['default_lb_type'];
         $typereq = [];
-        foreach ($conf['lb_types'] as $type) {
+        foreach ($config['lb_types'] as $type) {
             $typereq[] = $type['name'];
         }
         $typereq = implode('|', $typereq);
@@ -290,8 +289,6 @@ class App
         if ($this->container['config']['debug']) {
             Debug::enable();
         }
-
-        $this->container['routes'] = $this->getRoutes();
     }
 
     public function handle(Request $req): Response
