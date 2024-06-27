@@ -44,11 +44,17 @@ class DataUpdater
                         rank,
                         ROUND(1000.0 * (1.0 - |/(1.0 - (((rank - 1.0)/1000.0) - 1.0)^2))) AS noodle_points
                     FROM generate_series(1, 1000) rank
+                ),
+                max_user_weight AS MATERIALIZED (
+                    SELECT COUNT(*) * 1000 AS weight
+                    FROM official_levels
+                    WHERE is_sprint
                 )
 
                 SELECT
                     users.steam_id,
-                    SUM(COALESCE(points.noodle_points, 0)) AS weight
+                    SUM(COALESCE(points.noodle_points, 0)) AS score,
+                    SUM(COALESCE(points.noodle_points, 0)) / (SELECT weight FROM max_user_weight) AS weight
                 FROM users
                 INNER JOIN sprint_leaderboard_entries
                 ON sprint_leaderboard_entries.steam_id = users.steam_id
@@ -104,7 +110,7 @@ class DataUpdater
                             id,
                             finished_count,
                             CASE WHEN finished_count > 0
-                                THEN (top_weight / 120000 * :top_weight) + (unfinished_weight  * :unfinished_weight)
+                                THEN (top_weight * :top_weight) + (unfinished_weight  * :unfinished_weight)
                                 ELSE NULL
                             END AS track_weight
                         FROM stats
@@ -250,7 +256,7 @@ class DataUpdater
                 SELECT
                     users.steam_id,
                     users.name,
-                    user_weights.weight AS holdboost_score,
+                    user_weights.score AS holdboost_score,
                     COALESCE(sprint.count, 0) AS sprint_count,
                     COALESCE(sprint.score, 0) AS sprint_score,
                     COALESCE(challenge.count, 0) AS challenge_count,
