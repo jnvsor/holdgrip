@@ -260,6 +260,8 @@ class App
     {
         if ($this->booted) {
             return;
+        } else {
+            $this->booted = true;
         }
 
         if (class_exists(Kint::class)) {
