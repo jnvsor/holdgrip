@@ -14,12 +14,13 @@ FROM php:8.3-apache
 WORKDIR /var/www
 
 RUN apt-get update && apt-get install -y cron git libpq-dev
-RUN docker-php-ext-install pdo pdo_pgsql
+RUN docker-php-ext-install pdo pdo_pgsql opcache
 RUN a2enmod rewrite
 RUN a2enmod headers
 RUN echo "*/30 * * * * /usr/local/bin/php /var/www/cron.php >/proc/1/fd/1 2>/proc/1/fd/2" > /etc/cron.d/holdgrip
 RUN chmod 0644 /etc/cron.d/holdgrip
 RUN crontab /etc/cron.d/holdgrip
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
 COPY ./ /var/www/
 COPY --from=composer /var/www/ ./
