@@ -130,20 +130,20 @@ class DataUpdater
                 WITH latestFiles AS (
                     SELECT
                         author_steam_id,
-                        file_name,
+                        raw_details ->> \'filename\' AS file_name,
                         MAX(time_created) as created_latest,
                         MIN(time_created) AS time_created,
-                        SUM(votes_up) AS votes_up,
-                        SUM(votes_down) AS votes_down
+                        SUM((raw_details -> \'vote_data\' -> \'votes_up\')::integer) AS votes_up,
+                        SUM((raw_details -> \'vote_data\' -> \'votes_down\')::integer) AS votes_down
                     FROM workshop_level_details
-                    GROUP BY author_steam_id, file_name
+                    GROUP BY author_steam_id, raw_details ->> \'filename\'
                 ),
                 validLevels AS (
                     SELECT wld.level_id, lf.time_created, lf.votes_up, lf.votes_down
                     FROM workshop_level_details AS wld
                     INNER JOIN latestFiles AS lf
                     ON lf.author_steam_id = wld.author_steam_id
-                    AND lf.file_name = wld.file_name
+                    AND lf.file_name = wld.raw_details ->> \'filename\'
                     AND lf.created_latest = wld.time_created
                 )
 
