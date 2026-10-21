@@ -24,6 +24,8 @@ RUN chmod 0644 /etc/cron.d/holdgrip
 RUN crontab /etc/cron.d/holdgrip
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
+COPY cron.php .
+COPY entrypoint.sh .
 COPY html ./html
 COPY src ./src
 COPY views ./views
