@@ -8,7 +8,7 @@
         "symfony/routing": "^8.1"
     },
     "require-dev": {
-        "kint-php/kint": "^5"
+        "kint-php/kint": "^6"
     },
     "autoload": {
         "psr-4": {
