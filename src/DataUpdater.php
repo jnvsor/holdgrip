@@ -340,6 +340,39 @@ class DataUpdater
             ');
             $this->bulkInsert($db, 'users', $user_scores);
 
+            // Overall ranks are precomputed here so the player page doesn't
+            // have to rank every user on every request. They're computed in
+            // SQLite rather than postgres because the two sort NULL scores
+            // differently (holdboost_score can be NULL).
+            $db->executeStatement('DROP TABLE IF EXISTS user_ranks');
+            $db->executeStatement('
+                CREATE TABLE user_ranks (
+                    steam_id integer NOT NULL PRIMARY KEY,
+                    holdboost_rank integer NOT NULL,
+                    sprint_rank integer NOT NULL,
+                    challenge_rank integer NOT NULL,
+                    stunt_rank integer NOT NULL
+                ) WITHOUT ROWID
+            ');
+            $db->executeStatement('
+                INSERT INTO user_ranks (steam_id, holdboost_rank, sprint_rank, challenge_rank, stunt_rank)
+                SELECT
+                    steam_id,
+                    RANK() OVER (
+                        ORDER BY holdboost_score DESC
+                    ),
+                    RANK() OVER (
+                        ORDER BY sprint_score DESC
+                    ),
+                    RANK() OVER (
+                        ORDER BY challenge_score DESC
+                    ),
+                    RANK() OVER (
+                        ORDER BY stunt_score DESC
+                    )
+                FROM users
+            ');
+
             foreach ($this->lb_types as $type => $opts) {
                 $weighted_leaderboard = $this->xdb->executeQuery('
                     SELECT level_id, steam_id, rank, '.$opts['score_field'].', workshop_score, workshop_score_weighted
