@@ -135,41 +135,23 @@ class PlayerController
     public function show(Request $req, int $id, string $type): Response
     {
         $player = $this->db->fetchAssociative('
-                WITH rank AS (
-                    SELECT
-                        steam_id,
-                        RANK() OVER (
-                            ORDER BY sprint_score DESC
-                        ) AS sprint,
-                        RANK() OVER (
-                            ORDER BY challenge_score DESC
-                        ) AS challenge,
-                        RANK() OVER (
-                            ORDER BY stunt_score DESC
-                        ) AS stunt,
-                        RANK() OVER (
-                            ORDER BY holdboost_score DESC
-                        ) AS holdboost
-                    FROM users
-                )
-
                 SELECT
                     users.steam_id,
                     name,
-                    rank.holdboost AS holdboost_rank,
+                    user_ranks.holdboost_rank,
                     holdboost_score,
-                    rank.sprint AS sprint_rank,
+                    user_ranks.sprint_rank,
                     sprint_count,
                     ROUND(sprint_score) AS sprint_score,
-                    rank.challenge AS challenge_rank,
+                    user_ranks.challenge_rank,
                     challenge_count,
                     ROUND(challenge_score) AS challenge_score,
-                    rank.stunt AS stunt_rank,
+                    user_ranks.stunt_rank,
                     stunt_count,
                     ROUND(stunt_score) AS stunt_score
                 FROM users
-                INNER JOIN rank
-                ON rank.steam_id = users.steam_id
+                INNER JOIN user_ranks
+                ON user_ranks.steam_id = users.steam_id
                 WHERE users.steam_id = ?
             ',
             [$id]
