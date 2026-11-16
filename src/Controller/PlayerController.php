@@ -25,60 +25,36 @@ class PlayerController
     public function list(Request $req, string $type): Response
     {
         $lb = $this->db->fetchAllAssociative('
-            WITH typelb AS (
-                SELECT
-                    steam_id,
-                    name,
-                    holdboost_score,
-                    '.$type.'_count AS count,
-                    '.$type.'_score AS score
-                FROM users
-            ),
-            leaderboard AS (
-                SELECT
-                    RANK() OVER (
-                        ORDER BY score DESC
-                    ) AS rank,
-                    steam_id,
-                    name,
-                    holdboost_score,
-                    count,
-                    ROUND(score) AS score
-                FROM typelb
-                WHERE score > 0
-                GROUP BY steam_id
-                ORDER BY score DESC
-                LIMIT 1100
-            )
-
-            SELECT * FROM leaderboard
-            WHERE rank < 1001
+            SELECT
+                u.steam_id,
+                u.name,
+                u.holdboost_score,
+                u.'.$type.'_count AS count,
+                ROUND(u.'.$type.'_score) AS score,
+                ur.'.$type.'_rank AS rank
+            FROM users AS u
+            INNER JOIN user_ranks AS ur
+            ON u.steam_id = ur.steam_id
+            WHERE '.$type.'_rank < 1001
+            AND '.$type.'_score > 0
             ORDER BY score DESC
+            LIMIT 1100
         ');
 
         $firsts = $this->db->fetchAllAssociative('
-            WITH lb AS (
-                SELECT * FROM weighted_'.$type.'_leaderboard
-            ),
-            levels AS (
-                SELECT * FROM workshop_levels WHERE is_'.$type.'
-            )
-
             SELECT
                 RANK() OVER (
-                    ORDER BY COUNT(*) DESC
+                    ORDER BY '.$type.'_firsts DESC
                 ) AS rank,
-                COUNT(*) firsts,
-                users.steam_id,
-                users.name
-            FROM lb
-            INNER JOIN users
-            ON users.steam_id = lb.steam_id
-            INNER JOIN levels
-            ON levels.id = lb.level_id
-            WHERE lb.rank = 1
-            GROUP BY users.steam_id
-            ORDER BY firsts DESC
+                '.$type.'_firsts AS firsts,
+                u.steam_id,
+                u.name
+            FROM users AS u
+            INNER JOIN user_ranks AS ur
+            ON ur.steam_id = u.steam_id
+            WHERE '.$type.'_firsts > 0
+            GROUP BY u.steam_id
+            ORDER BY firsts DESC, u.steam_id
         ');
 
         $firsts_trunced = [];

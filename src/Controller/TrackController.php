@@ -107,33 +107,26 @@ class TrackController
                         '.$type.'_track_weight AS track_weight
                     FROM workshop_levels
                     WHERE is_'.$type.'
-                ),
-                t AS (
-                    SELECT
-                        RANK() OVER (
-                            ORDER BY track_weight DESC
-                        ) weight_rank,
-                        RANK() OVER (
-                            ORDER BY finished_count DESC
-                        ) finished_rank,
-                        RANK() OVER (
-                            ORDER BY popularity DESC
-                        ) popular_rank,
-                        id,
-                        name,
-                        time_created,
-                        votes_up,
-                        votes_down,
-                        is_sprint,
-                        is_challenge,
-                        is_stunt,
-                        finished_count,
-                        ROUND(1000.0 * track_weight) AS track_weight
-                    FROM levels
                 )
 
-                SELECT * FROM t
-                WHERE id = ?
+                SELECT
+                    rank.weight_rank,
+                    rank.finished_rank,
+                    rank.popularity_rank,
+                    levels.id,
+                    name,
+                    time_created,
+                    votes_up,
+                    votes_down,
+                    is_sprint,
+                    is_challenge,
+                    is_stunt,
+                    finished_count,
+                    ROUND(1000.0 * track_weight) AS track_weight
+                FROM levels
+                INNER JOIN level_'.$type.'_ranks AS rank
+                ON rank.id = levels.id
+                WHERE levels.id = ?
             ',
             [$id]
         );
