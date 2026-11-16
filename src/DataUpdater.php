@@ -367,7 +367,91 @@ class DataUpdater
                     ON weighted_'.$type.'_leaderboard (steam_id)
                 ');
                 $this->bulkInsert($db, 'weighted_'.$type.'_leaderboard', $weighted_leaderboard);
+
+                $db->executeStatement('DROP TABLE IF EXISTS level_'.$type.'_ranks');
+                $db->executeStatement('
+                    CREATE TABLE level_'.$type.'_ranks (
+                        id integer NOT NULL PRIMARY KEY,
+                        popularity_rank integer NOT NULL,
+                        weight_rank integer NOT NULL,
+                        finished_rank integer NOT NULL
+                    ) WITHOUT ROWID
+                ');
+                $db->executeStatement('
+                    INSERT INTO level_'.$type.'_ranks (id, popularity_rank, weight_rank, finished_rank)
+                    SELECT
+                        id,
+                        RANK() OVER (
+                            ORDER BY popularity DESC
+                        ),
+                        RANK() OVER (
+                            ORDER BY '.$type.'_track_weight DESC
+                        ),
+                        RANK() OVER (
+                            ORDER BY '.$type.'_finished_count DESC
+                        )
+                    FROM workshop_levels
+                    WHERE is_'.$type.'
+                ');
             }
+
+            // Overall ranks are precomputed here so the player page doesn't
+            // have to rank every user on every request. They're computed in
+            // SQLite rather than postgres because the two sort NULL scores
+            // differently (holdboost_score can be NULL).
+            $db->executeStatement('DROP TABLE IF EXISTS user_ranks');
+            $db->executeStatement('
+                CREATE TABLE user_ranks (
+                    steam_id integer NOT NULL PRIMARY KEY,
+                    holdboost_rank integer NOT NULL,
+                    sprint_rank integer NOT NULL,
+                    sprint_firsts integer NOT NULL,
+                    challenge_rank integer NOT NULL,
+                    challenge_firsts integer NOT NULL,
+                    stunt_rank integer NOT NULL,
+                    stunt_firsts integer NOT NULL
+                ) WITHOUT ROWID
+            ');
+            $db->executeStatement('
+                INSERT INTO user_ranks (
+                    steam_id,
+                    holdboost_rank,
+                    sprint_rank,
+                    sprint_firsts,
+                    challenge_rank,
+                    challenge_firsts,
+                    stunt_rank,
+                    stunt_firsts
+                )
+                SELECT
+                    users.steam_id,
+                    RANK() OVER (
+                        ORDER BY holdboost_score DESC
+                    ),
+                    RANK() OVER (
+                        ORDER BY sprint_score DESC
+                    ),
+                    COUNT(DISTINCT sprint.level_id),
+                    RANK() OVER (
+                        ORDER BY challenge_score DESC
+                    ),
+                    COUNT(DISTINCT challenge.level_id),
+                    RANK() OVER (
+                        ORDER BY stunt_score DESC
+                    ),
+                    COUNT(DISTINCT stunt.level_id)
+                FROM users
+                LEFT JOIN weighted_sprint_leaderboard AS sprint
+                ON sprint.steam_id = users.steam_id
+                AND sprint.rank = 1
+                LEFT JOIN weighted_challenge_leaderboard AS challenge
+                ON challenge.steam_id = users.steam_id
+                AND challenge.rank = 1
+                LEFT JOIN weighted_stunt_leaderboard AS stunt
+                ON stunt.steam_id = users.steam_id
+                AND stunt.rank = 1
+                GROUP BY users.steam_id
+            ');
         });
     }
 
